@@ -38,40 +38,32 @@ public class RentalController {
 
     @PostMapping("/start")
     public Rental startRental(@RequestBody Rental rental) {
-        // --- 1. VALIDAÇÃO (NOVO): Verificar se o Utilizador existe ---
+        // --- Validações de User e Vehicle (Mantém o que já tinhas) ---
         try {
             UserDto user = userClient.getUserById(rental.getUserId());
-            if (user == null) {
-                throw new RuntimeException("Utilizador não encontrado no sistema.");
-            }
-        } catch (Exception e) {
-            // Se o serviço de utilizadores estiver em baixo ou der 404
-            throw new RuntimeException("Erro ao validar utilizador: " + e.getMessage());
-        }
-
-        // --- 2. VALIDAÇÃO (NOVO): Verificar se o Veículo existe ---
-        try {
+            if (user == null) throw new RuntimeException("Utilizador não encontrado.");
             VehicleDto vehicle = vehicleClient.getVehicleById(rental.getVehicleId());
-            if (vehicle == null) {
-                throw new RuntimeException("Veículo não encontrado no sistema.");
-            }
-            // Opcional: Se o VehicleDto tiver campo "available", podes verificar aqui também
-            // if (!vehicle.isAvailable()) throw new RuntimeException("Veículo indisponível.");
-
+            if (vehicle == null) throw new RuntimeException("Veículo não encontrado.");
         } catch (Exception e) {
-            throw new RuntimeException("Erro ao validar veículo: " + e.getMessage());
+            throw new RuntimeException("Erro validação: " + e.getMessage());
         }
-        // -------------------------------------------------------------
 
-        // Validação Local: O carro já está alugado na tabela de rentals?
+        // Validação: Carro ocupado?
         List<Rental> activeRentals = repository.findByVehicleIdAndActiveTrue(rental.getVehicleId());
         if (!activeRentals.isEmpty()) {
-            throw new RuntimeException("Este carro já está alugado (Aluguer em curso)!");
+            throw new RuntimeException("Este carro já está alugado!");
         }
 
-        rental.setStartTime(LocalDateTime.now());
+        // --- ALTERAÇÃO PRINCIPAL AQUI ---
+        // Se o utilizador não enviou data de início, usamos AGORA.
+        if (rental.getStartTime() == null) {
+            rental.setStartTime(LocalDateTime.now());
+        }
+
+        // NOTA: Se o utilizador enviou endTime, aceitamos e guardamos!
+        // (Não forçamos active=true se já tiver terminado, mas assumimos que começa ativo)
         rental.setActive(true);
-        rental.setPricePerHour(10.0);
+        rental.setPricePerHour(10.0); // Podes ir buscar isto ao VehicleDto se quiseres
 
         return repository.save(rental);
     }
@@ -85,29 +77,36 @@ public class RentalController {
             throw new RuntimeException("Este aluguer já foi terminado.");
         }
 
-        rental.setEndTime(LocalDateTime.now());
+        // --- LÓGICA DE FIM E PAGAMENTO ---
+
+        // Se a data de fim AINDA NÃO EXISTIR (aluguer estilo "taxímetro"), definimos agora.
+        // Se JÁ EXISTIR (reserva definida no início), mantemos a data combinada para o preço.
+        if (rental.getEndTime() == null) {
+            rental.setEndTime(LocalDateTime.now());
+        }
+
         rental.setActive(false);
 
-        // Cálculo do preço
+        // Calcular duração
         Duration duration = Duration.between(rental.getStartTime(), rental.getEndTime());
         long minutes = duration.toMinutes();
+
+        // Evitar preços negativos se o utilizador puser datas erradas
+        if (minutes < 0) minutes = 0;
+
         double hours = (minutes == 0) ? 0.1 : (minutes / 60.0);
         double finalPrice = hours * rental.getPricePerHour();
 
-        System.out.println("Aluguer terminado. Preço calculado: " + finalPrice);
+        System.out.println("Aluguer terminado. Duração: " + hours + "h. Preço: " + finalPrice);
 
-        // Chamada ao Payment Service
+        // Enviar para Payment
         try {
             PaymentDto paymentReq = new PaymentDto();
             paymentReq.setRentalId(rental.getId());
             paymentReq.setAmount(finalPrice);
-
             paymentClient.processPayment(paymentReq);
-
             System.out.println(">> SUCESSO: Pagamento enviado via Feign.");
-
         } catch (Exception e) {
-            // Nota: Num cenário real, deverias salvar na BD que o pagamento FALHOU (ex: status="PENDING")
             System.out.println(">> ERRO: Falha no pagamento: " + e.getMessage());
         }
 
