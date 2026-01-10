@@ -22,7 +22,6 @@ public class RentalController {
     @Autowired
     private RentalRepository repository;
 
-    // --- SUBSTUIÇÃO DO REST TEMPLATE PELOS CLIENTES FEIGN ---
     @Autowired
     private UserClient userClient;
 
@@ -31,7 +30,6 @@ public class RentalController {
 
     @Autowired
     private PaymentClient paymentClient;
-    // --------------------------------------------------------
 
     @GetMapping("/viewall")
     public List<Rental> getAllRentals() {
@@ -40,10 +38,35 @@ public class RentalController {
 
     @PostMapping("/start")
     public Rental startRental(@RequestBody Rental rental) {
-        List<Rental> activeRentals = repository.findByVehicleIdAndActiveTrue(rental.getVehicleId());
+        // --- 1. VALIDAÇÃO (NOVO): Verificar se o Utilizador existe ---
+        try {
+            UserDto user = userClient.getUserById(rental.getUserId());
+            if (user == null) {
+                throw new RuntimeException("Utilizador não encontrado no sistema.");
+            }
+        } catch (Exception e) {
+            // Se o serviço de utilizadores estiver em baixo ou der 404
+            throw new RuntimeException("Erro ao validar utilizador: " + e.getMessage());
+        }
 
+        // --- 2. VALIDAÇÃO (NOVO): Verificar se o Veículo existe ---
+        try {
+            VehicleDto vehicle = vehicleClient.getVehicleById(rental.getVehicleId());
+            if (vehicle == null) {
+                throw new RuntimeException("Veículo não encontrado no sistema.");
+            }
+            // Opcional: Se o VehicleDto tiver campo "available", podes verificar aqui também
+            // if (!vehicle.isAvailable()) throw new RuntimeException("Veículo indisponível.");
+
+        } catch (Exception e) {
+            throw new RuntimeException("Erro ao validar veículo: " + e.getMessage());
+        }
+        // -------------------------------------------------------------
+
+        // Validação Local: O carro já está alugado na tabela de rentals?
+        List<Rental> activeRentals = repository.findByVehicleIdAndActiveTrue(rental.getVehicleId());
         if (!activeRentals.isEmpty()) {
-            throw new RuntimeException("Este carro já está alugado!");
+            throw new RuntimeException("Este carro já está alugado (Aluguer em curso)!");
         }
 
         rental.setStartTime(LocalDateTime.now());
@@ -73,21 +96,20 @@ public class RentalController {
 
         System.out.println("Aluguer terminado. Preço calculado: " + finalPrice);
 
-        // --- CHAMADA AO PAYMENT SERVICE VIA FEIGN ---
+        // Chamada ao Payment Service
         try {
             PaymentDto paymentReq = new PaymentDto();
             paymentReq.setRentalId(rental.getId());
             paymentReq.setAmount(finalPrice);
 
-            // Chamada limpa, sem URLs manuais!
             paymentClient.processPayment(paymentReq);
 
             System.out.println(">> SUCESSO: Pagamento enviado via Feign.");
 
         } catch (Exception e) {
+            // Nota: Num cenário real, deverias salvar na BD que o pagamento FALHOU (ex: status="PENDING")
             System.out.println(">> ERRO: Falha no pagamento: " + e.getMessage());
         }
-        // --------------------------------------------
 
         return repository.save(rental);
     }
@@ -106,7 +128,6 @@ public class RentalController {
         Rental rental = repository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Aluguer não encontrado"));
 
-        // --- CHAMADAS LIMPAS VIA FEIGN ---
         String nomeCondutor = "Desconhecido";
         String modeloCarro = "Desconhecido";
 
@@ -123,7 +144,6 @@ public class RentalController {
         } catch (Exception e) {
             System.out.println("Erro ao buscar Vehicle: " + e.getMessage());
         }
-        // ---------------------------------
 
         return "O utilizador " + nomeCondutor + " está a conduzir um " + modeloCarro;
     }
