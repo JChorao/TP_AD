@@ -7,6 +7,8 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.servlet.view.RedirectView;
 import pt.ipcb.ad.frontend_service.client.RentalClient;
 import pt.ipcb.ad.frontend_service.client.UserClient;
 import pt.ipcb.ad.frontend_service.client.VehicleClient;
@@ -50,8 +52,11 @@ public class WebController {
     }
 
     @GetMapping("/")
-    public String index() {
-        return "redirect:/cars";
+    public RedirectView index() {
+        RedirectView redirect = new RedirectView();
+        redirect.setUrl("/cars");
+        redirect.setContextRelative(true); // <--- O SEGREDO: Força ser relativo
+        return redirect;
     }
 
     // --- PÁGINA: LISTA DE CARROS ---
@@ -141,4 +146,35 @@ public class WebController {
         }
         return "redirect:/my-rentals";
     }
+
+    @GetMapping("/add-car")
+    public String showAddCarForm(HttpSession session, Model model) {
+        UserDto user = (UserDto) session.getAttribute("user");
+
+        // Segurança: Se não for ADMIN, chuta para fora
+        if (user == null || !"ADMIN".equals(user.getRole())) {
+            return "redirect:/cars";
+        }
+
+        model.addAttribute("vehicle", new VehicleDto());
+        return "add-car"; // Vamos criar este HTML no passo 4
+    }
+
+    // --- AÇÃO: SALVAR CARRO ---
+    @PostMapping("/add-car")
+    public String saveCar(@ModelAttribute VehicleDto vehicle, HttpSession session) {
+        UserDto user = (UserDto) session.getAttribute("user");
+        if (user == null || !"ADMIN".equals(user.getRole())) {
+            return "redirect:/cars";
+        }
+
+        try {
+            vehicle.setAvailable(true); // Por defeito fica livre
+            vehicleClient.createVehicle(vehicle);
+            return "redirect:/cars";
+        } catch (Exception e) {
+            return "redirect:/add-car?erro=" + "Erro ao criar: " + e.getMessage();
+        }
+    }
+
 }
