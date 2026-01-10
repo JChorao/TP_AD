@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestão de Utilizadores</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        body { background-color: #f8f9fa; font-family: 'Segoe UI', sans-serif; }
+        .avatar-img { border-radius: 50%; width: 45px; height: 45px; object-fit: cover; }
+        .table-card { border-radius: 15px; border: none; overflow: hidden; }
+        .role-badge { font-size: 0.8em; padding: 5px 10px; border-radius: 20px; }
+    </style>
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm sticky-top">
+    <div class="container">
+        <a class="navbar-brand fw-bold" href="/cars">
+            <i class="fa-solid fa-car-side me-2"></i>IPCB Drive
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav me-auto">
+                <li class="nav-item">
+                    <a class="nav-link" th:classappend="${#httpServletRequest.requestURI == '/cars' ? 'active' : ''}" href="/cars">Frota</a>
+                </li>
+
+                <li class="nav-item" th:if="${isLoggedIn}">
+                    <a class="nav-link" th:classappend="${#httpServletRequest.requestURI == '/my-rentals' ? 'active' : ''}" href="/my-rentals">Minhas Viagens</a>
+                </li>
+
+                <li class="nav-item" th:if="${isLoggedIn}">
+                    <a class="nav-link" th:classappend="${#httpServletRequest.requestURI == '/users' ? 'active' : ''}" href="/users">Utilizadores</a>
+                </li>
+            </ul>
+
+            <ul class="navbar-nav ms-auto align-items-center">
+
+                <li class="nav-item" th:unless="${isLoggedIn}">
+                    <a href="/login" class="btn btn-outline-light btn-sm fw-bold px-4">
+                        <i class="fa-solid fa-right-to-bracket me-2"></i>Login
+                    </a>
+                </li>
+
+                <li class="nav-item dropdown" th:if="${isLoggedIn}">
+                    <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" role="button" data-bs-toggle="dropdown">
+                        <div class="text-end me-2 d-none d-md-block" style="line-height: 1.2;">
+                            <div class="fw-bold text-white" th:text="${user.name}">Nome User</div>
+                            <small class="text-secondary" style="font-size: 0.75rem;" th:text="${user.email}">email@teste.com</small>
+                        </div>
+                        <img th:src="@{'https://ui-avatars.com/api/?name=' + ${user.name} + '&background=random&color=fff'}"
+                             class="rounded-circle border border-2 border-secondary" width="40" height="40" alt="Avatar">
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end shadow">
+                        <li><span class="dropdown-header">Conta</span></li>
+                        <li><a class="dropdown-item" href="#"><i class="fa-solid fa-user me-2"></i>Perfil</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <a class="dropdown-item text-danger fw-bold" href="/logout">
+                                <i class="fa-solid fa-right-from-bracket me-2"></i>Sair (Logout)
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<div class="container">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold text-dark">Utilizadores Registados</h2>
+            <p class="text-muted">Gerencie os clientes e administradores da plataforma.</p>
+        </div>
+        <button class="btn btn-success shadow-sm">
+            <i class="fa-solid fa-user-plus me-2"></i>Novo Utilizador
+        </button>
+    </div>
+
+    <div th:if="${erro}" class="alert alert-danger" th:text="${erro}"></div>
+
+    <div class="card table-card shadow-sm">
+        <div class="card-body p-0">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="bg-light">
+                <tr>
+                    <th class="ps-4">Utilizador</th>
+                    <th>Email</th>
+                    <th>Telemóvel</th>
+                    <th>Cargo (Role)</th>
+                    <th class="text-end pe-4">Ações</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="user : ${listaUsers}">
+                    <td class="ps-4">
+                        <div class="d-flex align-items-center">
+                            <img th:src="@{'https://ui-avatars.com/api/?name=' + ${user.name} + '&background=random'}"
+                                 class="avatar-img me-3" alt="Avatar">
+                            <div>
+                                <div class="fw-bold text-dark" th:text="${user.name}">João Silva</div>
+                                <small class="text-muted" th:text="'ID: ' + ${user.id}">ID: 1</small>
+                            </div>
+                        </div>
+                    </td>
+                    <td th:text="${user.email}">email@teste.com</td>
+                    <td th:text="${user.phoneNumber} ?: '--'">910000000</td>
+                    <td>
+                        <span th:if="${user.role == 'ADMIN'}" class="badge bg-primary role-badge">ADMIN</span>
+                        <span th:if="${user.role == 'USER'}" class="badge bg-info text-dark role-badge">USER</span>
+                        <span th:if="${user.role == null}" class="badge bg-secondary role-badge">N/A</span>
+                    </td>
+                    <td class="text-end pe-4">
+                        <button class="btn btn-outline-primary btn-sm me-1"><i class="fa-solid fa-pen"></i></button>
+                        <button class="btn btn-outline-danger btn-sm"><i class="fa-solid fa-trash"></i></button>
+                    </td>
+                </tr>
+
+                <tr th:if="${#lists.isEmpty(listaUsers)}">
+                    <td colspan="5" class="text-center py-5 text-muted">
+                        <i class="fa-solid fa-users-slash fa-2x mb-3"></i><br>
+                        Nenhum utilizador encontrado.
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

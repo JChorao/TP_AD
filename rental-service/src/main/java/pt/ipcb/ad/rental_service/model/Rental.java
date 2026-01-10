@@ -21,6 +21,6 @@ public class Rental {
     private LocalDateTime startTime; // Início do aluguer
     private LocalDateTime endTime;   // Fim (pode ser null se ainda estiver a andar)
 
-    private double pricePerHour;     // Preço congelado no momento do aluguer
+    private Double pricePerHour;     // Preço congelado no momento do aluguer
     private boolean active;          // Se o aluguer está a decorrer
 }

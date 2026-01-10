@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <title>Minhas Viagens</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-light">
+
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm sticky-top">
+  <div class="container">
+    <a class="navbar-brand fw-bold" href="/cars">
+      <i class="fa-solid fa-car-side me-2"></i>IPCB Drive
+    </a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="collapse navbar-collapse" id="navbarNav">
+      <ul class="navbar-nav me-auto">
+        <li class="nav-item">
+          <a class="nav-link" th:classappend="${#httpServletRequest.requestURI == '/cars' ? 'active' : ''}" href="/cars">Frota</a>
+        </li>
+
+        <li class="nav-item" th:if="${isLoggedIn}">
+          <a class="nav-link" th:classappend="${#httpServletRequest.requestURI == '/my-rentals' ? 'active' : ''}" href="/my-rentals">Minhas Viagens</a>
+        </li>
+
+        <li class="nav-item" th:if="${isLoggedIn}">
+          <a class="nav-link" th:classappend="${#httpServletRequest.requestURI == '/users' ? 'active' : ''}" href="/users">Utilizadores</a>
+        </li>
+      </ul>
+
+      <ul class="navbar-nav ms-auto align-items-center">
+
+        <li class="nav-item" th:unless="${isLoggedIn}">
+          <a href="/login" class="btn btn-outline-light btn-sm fw-bold px-4">
+            <i class="fa-solid fa-right-to-bracket me-2"></i>Login
+          </a>
+        </li>
+
+        <li class="nav-item dropdown" th:if="${isLoggedIn}">
+          <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" role="button" data-bs-toggle="dropdown">
+            <div class="text-end me-2 d-none d-md-block" style="line-height: 1.2;">
+              <div class="fw-bold text-white" th:text="${user.name}">Nome User</div>
+              <small class="text-secondary" style="font-size: 0.75rem;" th:text="${user.email}">email@teste.com</small>
+            </div>
+            <img th:src="@{'https://ui-avatars.com/api/?name=' + ${user.name} + '&background=random&color=fff'}"
+                 class="rounded-circle border border-2 border-secondary" width="40" height="40" alt="Avatar">
+          </a>
+          <ul class="dropdown-menu dropdown-menu-end shadow">
+            <li><span class="dropdown-header">Conta</span></li>
+            <li><a class="dropdown-item" href="#"><i class="fa-solid fa-user me-2"></i>Perfil</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li>
+              <a class="dropdown-item text-danger fw-bold" href="/logout">
+                <i class="fa-solid fa-right-from-bracket me-2"></i>Sair (Logout)
+              </a>
+            </li>
+          </ul>
+        </li>
+
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<div class="container">
+  <h2 class="mb-4"><i class="fa-solid fa-route me-2"></i>Histórico de Viagens (User ID: 1)</h2>
+
+  <div class="card shadow-sm border-0">
+    <div class="card-body p-0">
+      <table class="table table-hover mb-0 align-middle">
+        <thead class="table-dark">
+        <tr>
+          <th>ID Aluguer</th>
+          <th>ID Veículo</th>
+          <th>Início</th>
+          <th>Fim</th>
+          <th>Estado</th>
+          <th class="text-end">Ação</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="trip : ${viagens}">
+          <td th:text="${trip.id}">1</td>
+          <td>
+            <i class="fa-solid fa-car text-secondary me-2"></i>
+            <span th:text="${trip.vehicleId}">10</span>
+          </td>
+          <td th:text="${trip.startTime}">Data Início</td>
+          <td th:text="${trip.endTime} ?: '--'">--</td>
+          <td>
+            <span th:if="${trip.active}" class="badge bg-success bg-opacity-75">Em Curso</span>
+            <span th:unless="${trip.active}" class="badge bg-secondary">Terminada</span>
+          </td>
+          <td class="text-end">
+            <a th:if="${trip.active}"
+               th:href="@{/stop-rental/{id}(id=${trip.id})}"
+               class="btn btn-danger btn-sm fw-bold">
+              <i class="fa-solid fa-stop me-1"></i> Terminar & Pagar
+            </a>
+            <span th:unless="${trip.active}" class="text-success fw-bold">
+                                    <i class="fa-solid fa-check-circle"></i> Pago
+                                </span>
+          </td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="mt-4 text-center">
+    <a href="/cars" class="btn btn-primary btn-lg shadow">
+      <i class="fa-solid fa-plus me-2"></i>Nova Viagem
+    </a>
+  </div>
+</div>
+
+</body>
+</html>
