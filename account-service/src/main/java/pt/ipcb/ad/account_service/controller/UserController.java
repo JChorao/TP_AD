@@ -6,6 +6,10 @@ import pt.ipcb.ad.account_service.model.User;
 import pt.ipcb.ad.account_service.repository.UserRepository;
 import pt.ipcb.ad.account_service.dto.LoginRequest; // Importa o DTO
 
+
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+
 import java.util.List;
 
 @RestController
