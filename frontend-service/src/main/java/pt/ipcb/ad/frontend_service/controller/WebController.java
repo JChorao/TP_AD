@@ -84,6 +84,29 @@ public class WebController {
         return "users";
     }
 
+    // --- PÁGINA: Perfil ---
+    @GetMapping("/profile")
+    public String profile(Model model, HttpSession session) {
+        // 1. IMPORTANTE: A chave tem de ser "user" (igual ao LoginController)
+        UserDto sessionUser = (UserDto) session.getAttribute("user");
+
+        if (sessionUser == null) {
+            return "redirect:/login"; // Se não encontrar "user", manda para o login
+        }
+
+        try {
+            // Tenta buscar dados frescos à BD
+            UserDto freshUser = userClient.getUserById(sessionUser.getId());
+            model.addAttribute("user", freshUser);
+        } catch (Exception e) {
+            // Se falhar, usa os da sessão
+            model.addAttribute("user", sessionUser);
+            model.addAttribute("error", "Não foi possível sincronizar.");
+        }
+
+        return "profile";
+    }
+
     // --- AÇÃO: ALUGAR CARRO ---
     @GetMapping("/rent-car/{vehicleId}")
     public String rentCarAction(@PathVariable Long vehicleId,

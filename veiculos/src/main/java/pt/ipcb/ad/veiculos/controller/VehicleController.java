@@ -37,4 +37,14 @@ public class VehicleController {
     public Vehicle addVehicle(@RequestBody Vehicle vehicle) {
         return repository.save(vehicle);
     }
+
+    @PutMapping("/{id}/availability")
+    public Vehicle updateAvailability(@PathVariable Long id, @RequestParam boolean available) {
+        Vehicle vehicle = repository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Veículo não encontrado"));
+
+        vehicle.setAvailable(available); // Define true ou false
+
+        return repository.save(vehicle);
+    }
 }

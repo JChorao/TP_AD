@@ -8,6 +8,7 @@ public class VehicleDto {
     private String brand;
     private String model;
     private String licensePlate;
+    private boolean available;
 
     public VehicleDto() {
     }
@@ -26,5 +27,13 @@ public class VehicleDto {
 
     public void setLicensePlate(String licensePlate) {
         this.licensePlate = licensePlate;
+    }
+
+    public boolean isAvailable() {
+        return available;
+    }
+
+    public void setAvailable(boolean available) {
+        this.available = available;
     }
 }

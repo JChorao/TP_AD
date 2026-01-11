@@ -19,55 +19,7 @@
 </head>
 <body>
 
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm sticky-top">
-  <div class="container">
-    <a class="navbar-brand fw-bold" href="/cars">
-      <i class="fa-solid fa-car-side me-2"></i>IPCB Drive
-    </a>
-    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-      <span class="navbar-toggler-icon"></span>
-    </button>
-
-    <div class="collapse navbar-collapse" id="navbarNav">
-      <ul class="navbar-nav me-auto">
-        <li class="nav-item">
-          <a class="nav-link" th:classappend="${currentURI == '/cars' ? 'active' : ''}" href="/cars">Frota</a>
-        </li>
-        <li class="nav-item" th:if="${isLoggedIn}">
-          <a class="nav-link" th:classappend="${currentURI == '/my-rentals' ? 'active' : ''}" href="/my-rentals">Minhas Viagens</a>
-        </li>
-        <li class="nav-item" th:if="${isLoggedIn and user.role == 'ADMIN'}">
-          <a class="nav-link" th:classappend="${currentURI == '/users' ? 'active' : ''}" href="/users">Utilizadores</a>
-        </li>
-      </ul>
-
-      <ul class="navbar-nav ms-auto align-items-center">
-        <li class="nav-item" th:unless="${isLoggedIn}">
-          <a href="/login" class="btn btn-outline-light btn-sm fw-bold px-4">
-            <i class="fa-solid fa-right-to-bracket me-2"></i>Login
-          </a>
-        </li>
-
-        <li class="nav-item dropdown" th:if="${isLoggedIn}">
-          <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-            <div class="text-end me-2 d-none d-md-block" style="line-height: 1.2;">
-              <div class="fw-bold text-white" th:text="${user.name}">Nome User</div>
-              <small class="text-secondary" style="font-size: 0.75rem;" th:text="${user.email}">email</small>
-            </div>
-            <img th:src="@{'https://ui-avatars.com/api/?name=' + ${user.name} + '&background=random&color=fff'}"
-                 class="rounded-circle border border-2 border-secondary" width="40" height="40" alt="Avatar">
-          </a>
-          <ul class="dropdown-menu dropdown-menu-end shadow" style="min-width: 200px;">
-            <li><span class="dropdown-header">Minha Conta</span></li>
-            <li><a class="dropdown-item" href="#"><i class="fa-solid fa-user me-2 text-muted"></i>Perfil</a></li>
-            <li><hr class="dropdown-divider"></li>
-            <li><a class="dropdown-item text-danger fw-bold" href="/logout"><i class="fa-solid fa-power-off me-2"></i>Sair</a></li>
-          </ul>
-        </li>
-      </ul>
-    </div>
-  </div>
-</nav>
+<div th:replace="~{fragments/navbar :: navbar}"></div>
 
 <div class="container mt-4 pb-5">
   <h2 class="mb-4">Histórico de Viagens</h2>
@@ -76,14 +28,33 @@
     <div class="card-body p-0">
       <table class="table table-hover mb-0 align-middle">
         <thead class="table-dark">
-        <tr><th>ID</th><th>Veículo ID</th><th>Início</th><th>Fim</th><th>Estado</th><th class="text-end">Ação</th></tr>
+        <tr>
+          <th>ID</th>
+          <th>Veículo ID</th>
+          <th>Início</th>
+          <th>Fim</th>
+          <th>Preço</th> <th>Estado</th>
+          <th class="text-end">Ação</th>
+        </tr>
         </thead>
         <tbody>
         <tr th:each="trip : ${viagens}">
           <td th:text="${trip.id}">1</td>
           <td th:text="${trip.vehicleId}">10</td>
-          <td th:text="${trip.startTime}">Data</td>
-          <td th:text="${trip.endTime} ?: '--'">--</td>
+
+          <td th:text="${#temporals.format(trip.startTime, 'dd/MM/yyyy HH:mm')}">Data</td>
+          <td th:text="${trip.endTime != null} ? ${#temporals.format(trip.endTime, 'dd/MM/yyyy HH:mm')} : '--'">--</td>
+
+          <td>
+             <span th:if="${trip.totalPrice != null}"
+                   th:text="${#numbers.formatCurrency(trip.totalPrice)}"
+                   class="fw-bold text-dark">
+             </span>
+            <span th:if="${trip.totalPrice == null}" class="text-muted small">
+                 (A calcular...)
+             </span>
+          </td>
+
           <td>
             <span th:if="${trip.active}" class="badge bg-success">Em Curso</span>
             <span th:unless="${trip.active}" class="badge bg-secondary">Terminada</span>

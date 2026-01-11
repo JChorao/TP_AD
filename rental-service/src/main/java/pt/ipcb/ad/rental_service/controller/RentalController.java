@@ -38,32 +38,44 @@ public class RentalController {
 
     @PostMapping("/start")
     public Rental startRental(@RequestBody Rental rental) {
-        // --- Validações de User e Vehicle (Mantém o que já tinhas) ---
+        // --- Validações de User e Vehicle ---
         try {
             UserDto user = userClient.getUserById(rental.getUserId());
             if (user == null) throw new RuntimeException("Utilizador não encontrado.");
+
             VehicleDto vehicle = vehicleClient.getVehicleById(rental.getVehicleId());
             if (vehicle == null) throw new RuntimeException("Veículo não encontrado.");
+
+            // NOVO: Verifica se o veículo está marcado como disponível no serviço de veículos
+            if (!vehicle.isAvailable()) {
+                throw new RuntimeException("Este veículo não está disponível para aluguer.");
+            }
+
         } catch (Exception e) {
             throw new RuntimeException("Erro validação: " + e.getMessage());
         }
 
-        // Validação: Carro ocupado?
+        // Validação extra: Verifica se já existe algum aluguer ativo na tabela de alugueres
         List<Rental> activeRentals = repository.findByVehicleIdAndActiveTrue(rental.getVehicleId());
         if (!activeRentals.isEmpty()) {
-            throw new RuntimeException("Este carro já está alugado!");
+            throw new RuntimeException("Este carro já está alugado (registo duplicado)!");
         }
 
-        // --- ALTERAÇÃO PRINCIPAL AQUI ---
         // Se o utilizador não enviou data de início, usamos AGORA.
         if (rental.getStartTime() == null) {
             rental.setStartTime(LocalDateTime.now());
         }
 
-        // NOTA: Se o utilizador enviou endTime, aceitamos e guardamos!
-        // (Não forçamos active=true se já tiver terminado, mas assumimos que começa ativo)
         rental.setActive(true);
-        rental.setPricePerHour(10.0); // Podes ir buscar isto ao VehicleDto se quiseres
+        rental.setPricePerHour(10.0); // Podes melhorar isto buscando o preço ao VehicleDto
+
+        // --- ATUALIZAÇÃO DE ESTADO ---
+        // Marca o veículo como INDISPONÍVEL (false) no serviço de veículos
+        try {
+            vehicleClient.updateAvailability(rental.getVehicleId(), false);
+        } catch (Exception e) {
+            System.out.println("Aviso: Não foi possível atualizar o estado do veículo: " + e.getMessage());
+        }
 
         return repository.save(rental);
     }
@@ -77,10 +89,8 @@ public class RentalController {
             throw new RuntimeException("Este aluguer já foi terminado.");
         }
 
-        // --- LÓGICA DE FIM E PAGAMENTO ---
+        // --- LÓGICA DE FIM E PREÇO ---
 
-        // Se a data de fim AINDA NÃO EXISTIR (aluguer estilo "taxímetro"), definimos agora.
-        // Se JÁ EXISTIR (reserva definida no início), mantemos a data combinada para o preço.
         if (rental.getEndTime() == null) {
             rental.setEndTime(LocalDateTime.now());
         }
@@ -91,13 +101,22 @@ public class RentalController {
         Duration duration = Duration.between(rental.getStartTime(), rental.getEndTime());
         long minutes = duration.toMinutes();
 
-        // Evitar preços negativos se o utilizador puser datas erradas
         if (minutes < 0) minutes = 0;
 
         double hours = (minutes == 0) ? 0.1 : (minutes / 60.0);
         double finalPrice = hours * rental.getPricePerHour();
 
+        rental.setTotalPrice(finalPrice); // Guarda o preço final
+
         System.out.println("Aluguer terminado. Duração: " + hours + "h. Preço: " + finalPrice);
+
+        // --- LIBERTAR VEÍCULO ---
+        // Marca o veículo como DISPONÍVEL (true) no serviço de veículos
+        try {
+            vehicleClient.updateAvailability(rental.getVehicleId(), true);
+        } catch (Exception e) {
+            System.out.println("Aviso: Não foi possível libertar o veículo: " + e.getMessage());
+        }
 
         // Enviar para Payment
         try {

@@ -10,6 +10,8 @@ public class RentalDto {
     private LocalDateTime endTime;
     private boolean active;
     private Double pricePerHour;
+    private Double totalPrice;
+
     // Getters e Setters, construtor vazio
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
@@ -25,4 +27,6 @@ public class RentalDto {
     public void setActive(boolean active) { this.active = active; }
     public Double getPricePerHour() { return pricePerHour; }
     public void setPricePerHour(Double pricePerHour) { this.pricePerHour = pricePerHour; }
+    public Double getTotalPrice() { return totalPrice; }
+    public void setTotalPrice(Double totalPrice) { this.totalPrice = totalPrice; }
 }

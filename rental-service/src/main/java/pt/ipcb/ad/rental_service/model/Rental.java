@@ -23,4 +23,6 @@ public class Rental {
 
     private Double pricePerHour;     // Preço congelado no momento do aluguer
     private boolean active;          // Se o aluguer está a decorrer
+
+    private Double totalPrice; // Guarda o preço final da viagem
 }

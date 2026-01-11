@@ -20,5 +20,5 @@ public class Vehicle {
     private String brand;         // Marca (ex: Renault)
     private String model;         // Modelo (ex: Clio)
     private String licensePlate;  // Matrícula (ex: AA-00-BB)
-    private boolean available;    // Disponível?
+    private boolean available;    // Disponível
 }
