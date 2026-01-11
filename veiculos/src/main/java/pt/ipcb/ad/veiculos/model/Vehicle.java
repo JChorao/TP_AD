@@ -17,8 +17,13 @@ public class Vehicle {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String brand;         // Marca (ex: Renault)
-    private String model;         // Modelo (ex: Clio)
-    private String licensePlate;  // Matrícula (ex: AA-00-BB)
-    private boolean available;    // Disponível
+    private String brand;         // Marca (ex: Tesla)
+    private String model;         // Modelo (ex: Model 3)
+    private String licensePlate;  // Matrícula (ex: AA-00-ZE)
+    private boolean available;    // Disponível?
+
+    // --- NOVOS CAMPOS ---
+    private Double latitude;
+    private Double longitude;
+    private Double pricePerHour; // Preço para o cálculo do aluguer
 }

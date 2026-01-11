@@ -1,4 +1,4 @@
-package pt.ipcb.ad.veiculos; // Confirma o teu package
+package pt.ipcb.ad.veiculos;
 
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
@@ -14,17 +14,46 @@ public class VeiculosApplication {
 		SpringApplication.run(VeiculosApplication.class, args);
 	}
 
-	// --- CÓDIGO NOVO AQUI EM BAIXO ---
 	@Bean
 	CommandLineRunner initDatabase(VehicleRepository repository) {
 		return args -> {
 			// Só insere se a base de dados estiver vazia
 			if (repository.count() == 0) {
-				repository.save(new Vehicle(null, "Tesla", "Model 3", "AA-00-ZE", true));
-				repository.save(new Vehicle(null, "Renault", "Clio", "BB-11-CC", true));
-				repository.save(new Vehicle(null, "BMW", "i3", "CC-22-DD", false)); // Um indisponível
 
-				System.out.println(">>> Base de dados de Veículos populada com sucesso!");
+				// --- VEÍCULO 1: TESLA (Centro C. Branco) ---
+				Vehicle v1 = new Vehicle();
+				v1.setBrand("Tesla");
+				v1.setModel("Model 3");
+				v1.setLicensePlate("AA-00-ZE");
+				v1.setAvailable(true);
+				v1.setLatitude(39.82219);
+				v1.setLongitude(-7.49087);
+				v1.setPricePerHour(15.0);
+				repository.save(v1);
+
+				// --- VEÍCULO 2: RENAULT (Politécnico/ESTCB) ---
+				Vehicle v2 = new Vehicle();
+				v2.setBrand("Renault");
+				v2.setModel("Clio");
+				v2.setLicensePlate("BB-11-CC");
+				v2.setAvailable(true);
+				v2.setLatitude(39.81977);
+				v2.setLongitude(-7.50298);
+				v2.setPricePerHour(5.0);
+				repository.save(v2);
+
+				// --- VEÍCULO 3: BMW (Indisponível - Estação) ---
+				Vehicle v3 = new Vehicle();
+				v3.setBrand("BMW");
+				v3.setModel("i3");
+				v3.setLicensePlate("CC-22-DD");
+				v3.setAvailable(false); // Já está alugado ou em manutenção
+				v3.setLatitude(39.82500);
+				v3.setLongitude(-7.48000);
+				v3.setPricePerHour(15.0);
+				repository.save(v3);
+
+				System.out.println(">>> Base de dados de Veículos populada com sucesso (com GPS e Preços)!");
 			}
 		};
 	}
