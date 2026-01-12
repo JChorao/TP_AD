@@ -25,4 +25,10 @@ public class Rental {
     private boolean active;          // Se o aluguer está a decorrer
 
     private Double totalPrice; // Guarda o preço final da viagem
+
+    private Double startLat;
+    private Double startLon;
+    private Double endLat;
+    private Double endLon;
+    private Double distanceKms;
 }

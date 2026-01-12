@@ -1,49 +1,87 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
-    <title>Frota | IPCB Drive</title>
+    <meta charset="UTF-8">
+    <title>Mapa de Veículos - Car Sharing</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-</head>
-<body class="bg-light">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 
+    <style>
+        body, html { height: 100%; margin: 0; }
+        #map {
+            height: 80vh;
+            width: 100%;
+            border-radius: 0 0 15px 15px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .container-map {
+            padding: 0;
+            max-width: 100%;
+        }
+        .map-header {
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+    </style>
+</head>
+<body>
 <div th:replace="~{fragments/navbar :: navbar}"></div>
 
-<div class="container mt-4">
-</div>
-
-<div class="container">
-    <div th:if="${erro}" class="alert alert-danger" th:text="${erro}"></div>
-
-    <h2 class="mb-4">Veículos Disponíveis</h2>
-
-    <div class="row row-cols-1 row-cols-md-3 g-4">
-        <div class="col" th:each="car : ${listaCarros}">
-            <div class="card h-100 shadow-sm">
-                <div class="card-body">
-                    <h5 class="card-title" th:text="${car.brand} + ' ' + ${car.model}">Marca</h5>
-                    <p class="card-text text-muted" th:text="${car.licensePlate}">Matrícula</p>
-
-                    <div class="d-grid mt-3">
-                        <form th:action="@{/rent-car/{id}(id=${car.id})}" method="post"
-                              th:if="${car.available and user.roles.contains('CONDUTOR')}">
-                            <button type="submit" class="btn btn-success w-100">Alugar Agora</button>
-                        </form>
-
-                        <button disabled class="btn btn-secondary w-100"
-                                th:if="${car.available and !user.roles.contains('CONDUTOR')}">
-                            Apenas Condutores
-                        </button>
-
-                        <button disabled class="btn btn-outline-danger w-100" th:unless="${car.available}">
-                            Ocupado
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
+<div class="container-map">
+    <div class="map-header">
+        <h3>Veículos Disponíveis em Tempo Real</h3>
     </div>
+
+    <div id="map"></div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script th:inline="javascript">
+    // Captura o estado de login do servidor
+    var isLoggedIn = [[${isLoggedIn}]];
+
+    // Inicializar o mapa centrado em Castelo Branco
+    var map = L.map('map').setView([39.8230, -7.4919], 14);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    var carsList = [[${cars}]];
+
+    if (carsList && carsList.length > 0) {
+        carsList.forEach(function(car) {
+            if (car.latitude && car.longitude && car.available) {
+                var marker = L.marker([car.latitude, car.longitude]).addTo(map);
+
+                // Lógica dinâmica para o conteúdo do popup
+                var actionHtml = isLoggedIn ?
+                    `<form action="/rent-car/${car.id}" method="post">
+                        <button type="submit" class="btn btn-success btn-sm w-100 shadow-sm" style="font-weight: bold;">
+                            Confirmar Aluguer
+                        </button>
+                    </form>` :
+                    `<a href="/login" class="btn btn-primary btn-sm w-100 shadow-sm" style="font-weight: bold;">
+                        Login para Alugar
+                    </a>`;
+
+                var popupHtml = `
+                        <div style="text-align: center; min-width: 180px; padding: 10px;">
+                            <h5 style="margin-bottom: 5px; color: #0d6efd;">${car.brand} ${car.model}</h5>
+                            <hr style="margin: 8px 0;">
+                            <p style="font-size: 13px; margin-bottom: 15px; line-height: 1.5;">
+                                <strong>Matrícula:</strong> ${car.licensePlate}<br>
+                                <strong>Tarifa:</strong> ${car.pricePerHour}€/hora
+                            </p>
+                            ${actionHtml}
+                        </div>
+                    `;
+
+                marker.bindPopup(popupHtml);
+            }
+        });
+    }
+</script>
 </body>
 </html>

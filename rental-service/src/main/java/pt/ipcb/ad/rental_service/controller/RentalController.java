@@ -38,15 +38,14 @@ public class RentalController {
 
     @PostMapping("/start")
     public Rental startRental(@RequestBody Rental rental) {
-        // --- Validações de User e Vehicle ---
+        VehicleDto vehicle;
         try {
             UserDto user = userClient.getUserById(rental.getUserId());
             if (user == null) throw new RuntimeException("Utilizador não encontrado.");
 
-            VehicleDto vehicle = vehicleClient.getVehicleById(rental.getVehicleId());
+            vehicle = vehicleClient.getVehicleById(rental.getVehicleId());
             if (vehicle == null) throw new RuntimeException("Veículo não encontrado.");
 
-            // NOVO: Verifica se o veículo está marcado como disponível no serviço de veículos
             if (!vehicle.isAvailable()) {
                 throw new RuntimeException("Este veículo não está disponível para aluguer.");
             }
@@ -55,22 +54,29 @@ public class RentalController {
             throw new RuntimeException("Erro validação: " + e.getMessage());
         }
 
-        // Validação extra: Verifica se já existe algum aluguer ativo na tabela de alugueres
         List<Rental> activeRentals = repository.findByVehicleIdAndActiveTrue(rental.getVehicleId());
         if (!activeRentals.isEmpty()) {
-            throw new RuntimeException("Este carro já está alugado (registo duplicado)!");
+            throw new RuntimeException("Este carro já está alugado!");
         }
 
-        // Se o utilizador não enviou data de início, usamos AGORA.
         if (rental.getStartTime() == null) {
             rental.setStartTime(LocalDateTime.now());
         }
 
         rental.setActive(true);
-        rental.setPricePerHour(10.0); // Podes melhorar isto buscando o preço ao VehicleDto
 
-        // --- ATUALIZAÇÃO DE ESTADO ---
-        // Marca o veículo como INDISPONÍVEL (false) no serviço de veículos
+        // --- LÓGICA DE GEOLOCALIZAÇÃO INICIAL ---
+        // Guarda as coordenadas onde o veículo iniciou a viagem
+        rental.setStartLat(vehicle.getLatitude());
+        rental.setStartLon(vehicle.getLongitude());
+
+        // --- LÓGICA DE PREÇO POR HORA ---
+        if (vehicle.getPricePerHour() != null) {
+            rental.setPricePerHour(vehicle.getPricePerHour());
+        } else {
+            rental.setPricePerHour(10.0);
+        }
+
         try {
             vehicleClient.updateAvailability(rental.getVehicleId(), false);
         } catch (Exception e) {
@@ -89,42 +95,52 @@ public class RentalController {
             throw new RuntimeException("Este aluguer já foi terminado.");
         }
 
-        // --- LÓGICA DE FIM E PREÇO ---
-
         if (rental.getEndTime() == null) {
             rental.setEndTime(LocalDateTime.now());
         }
 
         rental.setActive(false);
 
-        // Calcular duração
+        // --- SIMULAÇÃO DE GEOLOCALIZAÇÃO FINAL E CÁLCULO DE KM ---
+        // Simula que o carro se deslocou para uma nova posição (ex: Castelo Branco)
+        double currentLat = 39.8230;
+        double currentLon = -7.4919;
+        rental.setEndLat(currentLat);
+        rental.setEndLon(currentLon);
+
+        double kmsPercorridos = calculateDistance(rental.getStartLat(), rental.getStartLon(), rental.getEndLat(), rental.getEndLon());
+        // Arredondar kms para 2 casas decimais
+        kmsPercorridos = Math.round(kmsPercorridos * 100.0) / 100.0;
+        rental.setDistanceKms(kmsPercorridos);
+
+        // --- CÁLCULO DE PREÇO TEMPO ---
         Duration duration = Duration.between(rental.getStartTime(), rental.getEndTime());
         long minutes = duration.toMinutes();
-
         if (minutes < 0) minutes = 0;
+        double hours = (minutes < 6) ? 0.1 : (minutes / 60.0);
+        double timePrice = hours * rental.getPricePerHour();
 
-        double hours = (minutes == 0) ? 0.1 : (minutes / 60.0);
-        double finalPrice = hours * rental.getPricePerHour();
+        // --- CÁLCULO DE PREÇO DISTÂNCIA ---
+        // Definimos uma taxa por KM (ex: 2€ por km) conforme sugerido no enunciado
+        double pricePerKm = 2;
+        double distancePrice = rental.getDistanceKms() * pricePerKm;
 
-        rental.setTotalPrice(finalPrice); // Guarda o preço final
+        // --- PREÇO TOTAL ---
+        double finalPrice = timePrice + distancePrice;
+        finalPrice = Math.round(finalPrice * 100.0) / 100.0;
+        rental.setTotalPrice(finalPrice);
 
-        System.out.println("Aluguer terminado. Duração: " + hours + "h. Preço: " + finalPrice);
-
-        // --- LIBERTAR VEÍCULO ---
-        // Marca o veículo como DISPONÍVEL (true) no serviço de veículos
         try {
             vehicleClient.updateAvailability(rental.getVehicleId(), true);
         } catch (Exception e) {
             System.out.println("Aviso: Não foi possível libertar o veículo: " + e.getMessage());
         }
 
-        // Enviar para Payment
         try {
             PaymentDto paymentReq = new PaymentDto();
             paymentReq.setRentalId(rental.getId());
             paymentReq.setAmount(finalPrice);
             paymentClient.processPayment(paymentReq);
-            System.out.println(">> SUCESSO: Pagamento enviado via Feign.");
         } catch (Exception e) {
             System.out.println(">> ERRO: Falha no pagamento: " + e.getMessage());
         }
@@ -163,6 +179,17 @@ public class RentalController {
             System.out.println("Erro ao buscar Vehicle: " + e.getMessage());
         }
 
-        return "O utilizador " + nomeCondutor + " está a conduzir um " + modeloCarro;
+        return "O utilizador " + nomeCondutor + " conduziu " + rental.getDistanceKms() + "km num " + modeloCarro;
+    }
+
+    private double calculateDistance(double lat1, double lon1, double lat2, double lon2) {
+        double earthRadius = 6371; // Raio da Terra em Km
+        double dLat = Math.toRadians(lat2 - lat1);
+        double dLon = Math.toRadians(lon2 - lon1);
+        double a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2)) *
+                        Math.sin(dLon / 2) * Math.sin(dLon / 2);
+        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        return earthRadius * c;
     }
 }
