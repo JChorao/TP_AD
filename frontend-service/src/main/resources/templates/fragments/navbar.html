@@ -15,14 +15,12 @@
                 <li class="nav-item" th:if="${isLoggedIn}">
                     <a class="nav-link" th:classappend="${currentURI == '/my-rentals' ? 'active' : ''}" href="/my-rentals">Minhas Viagens</a>
                 </li>
-
                 <li class="nav-item" th:if="${isLoggedIn and user.roles.contains('ADMIN')}">
                     <a class="nav-link" th:classappend="${currentURI == '/users' ? 'active' : ''}" href="/users">Utilizadores</a>
                 </li>
             </ul>
 
             <ul class="navbar-nav ms-auto align-items-center">
-
                 <li class="nav-item" th:unless="${isLoggedIn}">
                     <a href="/login" class="btn btn-outline-light btn-sm fw-bold px-4">
                         <i class="fa-solid fa-right-to-bracket me-2"></i>Login
@@ -39,7 +37,7 @@
                              class="rounded-circle border border-2 border-secondary" width="40" height="40" alt="Avatar">
                     </a>
 
-                    <ul class="dropdown-menu dropdown-menu-end shadow" style="min-width: 200px;">
+                    <ul class="dropdown-menu dropdown-menu-end shadow">
                         <li><span class="dropdown-header">Minha Conta</span></li>
                         <li>
                             <a class="dropdown-item" href="#">
