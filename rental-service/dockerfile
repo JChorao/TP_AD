@@ -1,16 +1,14 @@
-# Estágio de Runtime: Usa o Java 21 (versão leve Alpine)
-FROM eclipse-temurin:21-jdk-alpine
 
-# Define o diretório de trabalho dentro do contentor
+FROM maven:3.9-eclipse-temurin-21-alpine AS build
+WORKDIR /app
+COPY pom.xml .
+COPY src ./src
+
+RUN mvn clean package -DskipTests
+
+FROM eclipse-temurin:21-jdk-alpine
 WORKDIR /app
 
-# Copia o ficheiro .jar gerado pelo Maven para o contentor
-# O asterisco garante que ele apanha o jar mesmo que o nome mude ligeiramente
-COPY target/*.jar app.jar
-
-# Expõe a porta (opcional no Dockerfile, mas boa prática)
-# O Docker Compose tratará do mapeamento real
+COPY --from=build /app/target/*.jar app.jar
 EXPOSE 8080
-
-# Comando para iniciar a aplicação
 ENTRYPOINT ["java", "-jar", "app.jar"]
