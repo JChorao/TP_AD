@@ -10,6 +10,7 @@ import pt.ipcb.ad.rental_service.dto.UserDto;
 import pt.ipcb.ad.rental_service.dto.VehicleDto;
 import pt.ipcb.ad.rental_service.model.Rental;
 import pt.ipcb.ad.rental_service.repository.RentalRepository;
+import pt.ipcb.ad.rental_service.client.GpsClient;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -30,6 +31,9 @@ public class RentalController {
 
     @Autowired
     private PaymentClient paymentClient;
+
+    @Autowired
+    private GpsClient gpsClient;
 
     @GetMapping("/viewall")
     public List<Rental> getAllRentals() {
@@ -101,14 +105,30 @@ public class RentalController {
 
         rental.setActive(false);
 
-        // --- SIMULAÇÃO DE GEOLOCALIZAÇÃO FINAL E CÁLCULO DE KM ---
+        // --- SIMULAÇÃO DE GEOLOCALIZAÇÃO FINAL ---
         // Simula que o carro se deslocou para uma nova posição (ex: Castelo Branco)
+        // (Num cenário real, receberias estas coordenadas do GPS do carro ou da App)
         double currentLat = 39.8230;
         double currentLon = -7.4919;
         rental.setEndLat(currentLat);
         rental.setEndLon(currentLon);
 
-        double kmsPercorridos = calculateDistance(rental.getStartLat(), rental.getStartLon(), rental.getEndLat(), rental.getEndLon());
+        // --- CÁLCULO DE KM VIA MICROSERVIÇO (GPS-SERVICE) ---
+        // Agora chamamos o serviço externo em vez de calcular aqui
+        double kmsPercorridos = 0.0;
+        try {
+            kmsPercorridos = gpsClient.calculateDistance(
+                    rental.getStartLat(),
+                    rental.getStartLon(),
+                    rental.getEndLat(),
+                    rental.getEndLon()
+            );
+        } catch (Exception e) {
+            System.out.println("Erro ao contactar GPS Service: " + e.getMessage());
+            // Fallback: se o GPS falhar, assume 0 ou um valor por defeito, ou lança erro
+            kmsPercorridos = 0.0;
+        }
+
         // Arredondar kms para 2 casas decimais
         kmsPercorridos = Math.round(kmsPercorridos * 100.0) / 100.0;
         rental.setDistanceKms(kmsPercorridos);
@@ -117,12 +137,11 @@ public class RentalController {
         Duration duration = Duration.between(rental.getStartTime(), rental.getEndTime());
         long minutes = duration.toMinutes();
         if (minutes < 0) minutes = 0;
-        double hours = (minutes < 6) ? 0.1 : (minutes / 60.0);
+        double hours = (minutes < 6) ? 0.1 : (minutes / 60.0); // Mínimo 6 minutos cobrados como 0.1h
         double timePrice = hours * rental.getPricePerHour();
 
         // --- CÁLCULO DE PREÇO DISTÂNCIA ---
-        // Definimos uma taxa por KM (ex: 2€ por km) conforme sugerido no enunciado
-        double pricePerKm = 2;
+        double pricePerKm = 2.0; // Taxa fixa de exemplo
         double distancePrice = rental.getDistanceKms() * pricePerKm;
 
         // --- PREÇO TOTAL ---
@@ -130,12 +149,14 @@ public class RentalController {
         finalPrice = Math.round(finalPrice * 100.0) / 100.0;
         rental.setTotalPrice(finalPrice);
 
+        // --- LIBERTAR VEÍCULO ---
         try {
             vehicleClient.updateAvailability(rental.getVehicleId(), true);
         } catch (Exception e) {
             System.out.println("Aviso: Não foi possível libertar o veículo: " + e.getMessage());
         }
 
+        // --- PROCESSAR PAGAMENTO ---
         try {
             PaymentDto paymentReq = new PaymentDto();
             paymentReq.setRentalId(rental.getId());
@@ -182,14 +203,4 @@ public class RentalController {
         return "O utilizador " + nomeCondutor + " conduziu " + rental.getDistanceKms() + "km num " + modeloCarro;
     }
 
-    private double calculateDistance(double lat1, double lon1, double lat2, double lon2) {
-        double earthRadius = 6371; // Raio da Terra em Km
-        double dLat = Math.toRadians(lat2 - lat1);
-        double dLon = Math.toRadians(lon2 - lon1);
-        double a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-                Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2)) *
-                        Math.sin(dLon / 2) * Math.sin(dLon / 2);
-        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-        return earthRadius * c;
-    }
 }

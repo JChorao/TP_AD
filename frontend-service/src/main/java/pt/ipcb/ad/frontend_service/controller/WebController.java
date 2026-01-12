@@ -29,6 +29,11 @@ public class WebController {
         this.userClient = userClient;
     }
 
+    @GetMapping("/")
+    public String rootRedirect() {
+        return "redirect:/cars";
+    }
+
     // --- LISTA DE CARROS (ACESSO PÚBLICO) ---
     @GetMapping("/cars")
     public String listCars(Model model, HttpSession session) {
