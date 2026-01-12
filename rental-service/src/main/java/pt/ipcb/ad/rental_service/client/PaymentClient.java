@@ -5,7 +5,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import pt.ipcb.ad.rental_service.dto.PaymentDto;
 
-@FeignClient(name = "payment-service", url = "http://localhost:8084")
+@FeignClient(name = "payment-service")
 public interface PaymentClient {
 
     @PostMapping("/payments")

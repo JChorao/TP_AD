@@ -37,7 +37,6 @@ public class WebController {
     // --- LISTA DE CARROS (ACESSO PÚBLICO) ---
     @GetMapping("/cars")
     public String listCars(Model model, HttpSession session) {
-        // Removido o redirecionamento obrigatório para login
         UserDto user = (UserDto) session.getAttribute("user");
 
         try {
@@ -47,10 +46,10 @@ public class WebController {
             model.addAttribute("listaCarros", cars);
             model.addAttribute("cars", cars);
         } catch (Exception e) {
+            System.out.println("Erro ao obter carros: " + e.getMessage());
             model.addAttribute("erro", "Serviço de veículos indisponível.");
         }
 
-        // Define se o utilizador está logado para o Thymeleaf e JS
         model.addAttribute("user", user);
         model.addAttribute("isLoggedIn", user != null);
         model.addAttribute("currentURI", "/cars");
@@ -74,10 +73,17 @@ public class WebController {
             RentalDto rental = new RentalDto();
             rental.setUserId(user.getId());
             rental.setVehicleId(vehicleId);
+
+            // Chama o microserviço de alugueres
             rentalClient.startRental(rental);
+
             return "redirect:/my-rentals";
         } catch (Exception e) {
-            return "redirect:/cars?erro=Falha ao iniciar aluguer.";
+            // --- ALTERAÇÃO IMPORTANTE: LOG DE ERRO ---
+            // Isto vai imprimir o erro completo na consola do Docker
+            e.printStackTrace();
+            // Isto mostra o motivo do erro na barra de endereço do browser
+            return "redirect:/cars?erro=Falha ao iniciar aluguer: " + e.getMessage();
         }
     }
 
@@ -89,6 +95,7 @@ public class WebController {
         try {
             rentalClient.stopRental(id);
         } catch (Exception e) {
+            e.printStackTrace(); // Melhor logging
             System.out.println("Erro ao terminar aluguer: " + e.getMessage());
         }
 
@@ -113,6 +120,7 @@ public class WebController {
             List<UserDto> users = userClient.getAllUsers();
             model.addAttribute("listaUsers", users);
         } catch (Exception e) {
+            e.printStackTrace();
             model.addAttribute("erro", "Erro ao carregar utilizadores: " + e.getMessage());
         }
 
@@ -140,6 +148,7 @@ public class WebController {
                     .collect(Collectors.toList());
             model.addAttribute("viagens", userRentals);
         } catch (Exception e) {
+            e.printStackTrace();
             model.addAttribute("error", "Erro ao carregar viagens: " + e.getMessage());
         }
 

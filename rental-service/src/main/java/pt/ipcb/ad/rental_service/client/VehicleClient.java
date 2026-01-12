@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.PutMapping; // <--- Importante
 import org.springframework.web.bind.annotation.RequestParam; // <--- Importante
 import pt.ipcb.ad.rental_service.dto.VehicleDto;
 
-@FeignClient(name = "vehicle-service", url = "http://localhost:8082")
+@FeignClient(name = "vehicle-service")
 public interface VehicleClient {
 
     @GetMapping("/vehicles/{id}")

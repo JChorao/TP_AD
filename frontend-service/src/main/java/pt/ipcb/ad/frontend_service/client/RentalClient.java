@@ -5,7 +5,7 @@ import org.springframework.web.bind.annotation.*;
 import pt.ipcb.ad.frontend_service.dto.RentalDto;
 import java.util.List;
 
-@FeignClient(name = "rental-service", url = "http://localhost:8083")
+@FeignClient(name = "rental-service")
 public interface RentalClient {
 
     @PostMapping("/rentals/start")
@@ -14,8 +14,6 @@ public interface RentalClient {
     @PostMapping("/rentals/stop/{id}")
     RentalDto stopRental(@PathVariable("id") Long id);
 
-    // CORREÇÃO: O endpoint no backend (RentalController) é /viewall e a classe tem /rentals
-    // Logo, o URL completo é /rentals/viewall
     @GetMapping("/rentals/viewall")
     List<RentalDto> getAllRentals();
 }

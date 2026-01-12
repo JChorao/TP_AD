@@ -13,7 +13,6 @@ public interface VehicleClient {
     @GetMapping("/vehicles/viewall")
     List<VehicleDto> getAllVehicles();
 
-    // --- NOVO MÉTODO: CRIAR CARRO ---
     @PostMapping("/vehicles")
     VehicleDto createVehicle(@RequestBody VehicleDto vehicle);
 }
