@@ -37,26 +37,45 @@ public class UserController {
         return userRepository.findAll();
     }
 
-    // Endpoint de Registo / Criação
     @PostMapping
     public User createUser(@RequestBody User user) {
         user.setPassword(passwordEncoder.encode(user.getPassword()));
-
-        // Regra de Negócio: Se não tiver roles, é PASSAGEIRO por defeito
         if (user.getRoles() == null || user.getRoles().isEmpty()) {
             user.setRoles(new HashSet<>(Collections.singletonList("PASSAGEIRO")));
         }
         return userRepository.save(user);
     }
 
-    // Endpoint de Atualização (Upgrade para Condutor)
+    // Endpoint de Atualização
     @PutMapping("/{id}")
     public User updateUser(@PathVariable Long id, @RequestBody User updatedUser) {
         return userRepository.findById(id).map(user -> {
-            // Atualizar morada se fornecida
-            if (updatedUser.getAddress() != null) user.setAddress(updatedUser.getAddress());
 
-            // Atualizar Carta de Condução
+            // 1. Atualizar Username e Email
+            if (updatedUser.getUsername() != null && !updatedUser.getUsername().isEmpty()) {
+                user.setUsername(updatedUser.getUsername());
+            }
+            if (updatedUser.getEmail() != null && !updatedUser.getEmail().isEmpty()) {
+                user.setEmail(updatedUser.getEmail());
+            }
+
+            // 2. Atualizar Morada
+            if (updatedUser.getAddress() != null) {
+                user.setAddress(updatedUser.getAddress());
+            }
+
+            // 3. Atualizar Password (com validação da antiga)
+            if (updatedUser.getOldPassword() != null && !updatedUser.getOldPassword().isEmpty() &&
+                    updatedUser.getNewPassword() != null && !updatedUser.getNewPassword().isEmpty()) {
+
+                if (passwordEncoder.matches(updatedUser.getOldPassword(), user.getPassword())) {
+                    user.setPassword(passwordEncoder.encode(updatedUser.getNewPassword()));
+                } else {
+                    throw new RuntimeException("A password antiga está incorreta!");
+                }
+            }
+
+            // 4. Atualizar Carta de Condução
             boolean licenseUpdated = false;
             if (updatedUser.getLicenseNumber() != null && !updatedUser.getLicenseNumber().isEmpty()) {
                 user.setLicenseNumber(updatedUser.getLicenseNumber());
@@ -69,7 +88,7 @@ public class UserController {
                 user.setLicenseExpiryDate(updatedUser.getLicenseExpiryDate());
             }
 
-            // Regra de Negócio: Se tem número de carta, torna-se CONDUTOR
+            // Regra de Negócio: Se tem carta, torna-se CONDUTOR
             if (licenseUpdated || (user.getLicenseNumber() != null && !user.getLicenseNumber().isEmpty())) {
                 user.getRoles().add("CONDUTOR");
             }

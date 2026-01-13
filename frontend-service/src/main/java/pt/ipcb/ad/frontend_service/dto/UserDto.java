@@ -13,6 +13,10 @@ public class UserDto {
     private String phoneNumber;
     private String email;
 
+    // Campos para troca de password
+    private String oldPassword;
+    private String newPassword;
+
     // Carta
     private String licenseNumber;
     private LocalDate licenseIssueDate;

@@ -16,7 +16,6 @@ public class User {
     private String username;
     private String password;
 
-    // --- CORREÇÃO: Adicionado o campo em falta ---
     private String email;
 
     // --- Dados Pessoais e Morada ---
@@ -40,4 +39,10 @@ public class User {
 
     @ElementCollection(fetch = FetchType.EAGER)
     private Set<String> roles;
+
+    // --- Campos para mudança de password (Não guardados na BD) ---
+    @Transient
+    private String oldPassword;
+    @Transient
+    private String newPassword;
 }
