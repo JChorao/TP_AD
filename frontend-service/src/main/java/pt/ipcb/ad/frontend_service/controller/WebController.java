@@ -226,9 +226,9 @@ public class WebController {
         UserDto user = (UserDto) session.getAttribute("user");
         if (user == null) return "redirect:/login";
 
-        // CORREÇÃO: Apenas GESTOR_FROTA pode entrar. Admin é redirecionado se não tiver esse role.
-        if (user.getRoles() == null || !user.getRoles().contains("GESTOR_FROTA")) {
-            return "redirect:/cars?erro=Acesso negado. Apenas o Gestor de Frota pode ver estatísticas.";
+        // LÓGICA CORRIGIDA: Se NÃO for Gestor E NÃO for Admin, então expulsa
+        if (!user.getRoles().contains("GESTOR_FROTA") && !user.getRoles().contains("ADMIN")) {
+            return "redirect:/cars?erro=Acesso negado. Apenas Gestores ou Administradores podem ver estatísticas.";
         }
 
         try {
