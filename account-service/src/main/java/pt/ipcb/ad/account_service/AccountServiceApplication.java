@@ -37,6 +37,9 @@ public class AccountServiceApplication {
 				admin.setPhoneNumber("910000000");
 				admin.setBlocked(false);
 				admin.setRoles(Set.of("ADMIN", "CONDUTOR"));
+				admin.setLicenseNumber("P-22222222");
+				admin.setLicenseIssueDate(LocalDate.of(2015, 5, 20));
+				admin.setLicenseExpiryDate(LocalDate.of(2035, 5, 20));
 				userRepository.save(admin);
 
 				// 2. GESTOR (Manager)
@@ -48,6 +51,9 @@ public class AccountServiceApplication {
 				gestor.setPhoneNumber("920000000");
 				gestor.setBlocked(false);
 				gestor.setRoles(Set.of("GESTOR_FROTA", "CONDUTOR"));
+				gestor.setLicenseNumber("P-87654321");
+				gestor.setLicenseIssueDate(LocalDate.of(2015, 5, 20));
+				gestor.setLicenseExpiryDate(LocalDate.of(2035, 5, 20));
 				userRepository.save(gestor);
 
 				// 3. CONDUTOR (Driver)
@@ -69,7 +75,6 @@ public class AccountServiceApplication {
 				condutor.setLongitude(-7.49087);
 
 				condutor.setBlocked(false);
-				condutor.setRoles(Set.of("CONDUTOR"));
 				userRepository.save(condutor);
 
 				// 4. PASSAGEIRO (Passenger)
