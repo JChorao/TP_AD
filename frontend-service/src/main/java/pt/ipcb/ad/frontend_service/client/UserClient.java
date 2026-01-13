@@ -26,4 +26,7 @@ public interface UserClient {
 
     @PutMapping("/accounts/users/{id}")
     UserDto updateUser(@PathVariable("id") Long id, @RequestBody UserDto user);
+
+    @PostMapping("/accounts/register")
+    UserDto register(@RequestBody UserDto user);
 }

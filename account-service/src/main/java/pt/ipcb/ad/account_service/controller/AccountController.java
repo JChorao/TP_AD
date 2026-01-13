@@ -5,9 +5,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import pt.ipcb.ad.account_service.dto.LoginRequest;
+import pt.ipcb.ad.account_service.model.Role;
 import pt.ipcb.ad.account_service.model.User;
 import pt.ipcb.ad.account_service.repository.UserRepository;
 
+import java.util.Collections;
 import java.util.List;
 
 @RestController
@@ -56,5 +58,26 @@ public class AccountController {
             // Não atualizamos a password aqui por segurança neste exemplo simples
             return ResponseEntity.ok(userRepository.save(user));
         }).orElse(ResponseEntity.notFound().build());
+    }
+
+    @PostMapping("/register")
+    public ResponseEntity<?> register(@RequestBody User user) {
+        // 1. Verificar se o username ou email já existem
+        if (userRepository.findByUsername(user.getUsername()).isPresent()) {
+            return ResponseEntity.badRequest().body("Username já está em uso.");
+        }
+        if (userRepository.findByEmail(user.getEmail()).isPresent()) {
+            return ResponseEntity.badRequest().body("Email já está em uso.");
+        }
+
+        // 2. Encriptar a password
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
+
+        // 3. Definir Role por defeito como PASSAGEIRO
+        user.setRoles(Collections.singleton(Role.PASSAGEIRO.name()));
+
+        // 4. Guardar
+        User savedUser = userRepository.save(user);
+        return ResponseEntity.ok(savedUser);
     }
 }

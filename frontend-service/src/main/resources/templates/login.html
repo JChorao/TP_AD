@@ -10,30 +10,37 @@
     </style>
 </head>
 <body>
-<div class="login-card">
-    <div class="text-center mb-4">
-        <h2 class="fw-bold text-primary">IPCB Drive</h2>
-    </div>
+<div class="login-card shadow-lg"> <div class="text-center mb-4">
+    <h2 class="fw-bold text-primary">IPCB Drive</h2>
+</div>
 
     <div th:if="${error}" class="alert alert-danger text-center">
         <small th:text="${error}"></small>
     </div>
 
+    <div th:if="${param.registered}" class="alert alert-success text-center">
+        <small>Conta criada com sucesso! Faça login.</small>
+    </div>
+
     <form th:action="@{/login}" method="post" th:object="${loginRequest}">
         <div class="mb-3">
-            <label class="form-label">Email</label>
-            <input type="email" class="form-control" th:field="*{email}" placeholder="admin@ipcb.pt" required>
+            <label class="form-label">Email ou Username</label>
+            <input type="text" class="form-control" th:field="*{email}" placeholder="Introduza email ou username" required>
         </div>
         <div class="mb-3">
             <label class="form-label">Password</label>
             <input type="password" class="form-control" th:field="*{password}" required>
         </div>
+
         <div class="d-grid gap-2 mt-4">
             <button type="submit" class="btn btn-primary btn-lg">Entrar</button>
+
+            <hr class="my-2 text-muted">
+
+            <a href="/register" class="btn btn-outline-secondary">Criar Nova Conta</a>
         </div>
     </form>
 </div>
-
 
 </body>
 </html>
