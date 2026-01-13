@@ -7,6 +7,9 @@ import org.springframework.context.annotation.Bean;
 import pt.ipcb.ad.veiculos.model.Vehicle;
 import pt.ipcb.ad.veiculos.repository.VehicleRepository;
 
+import java.util.Arrays;
+import java.util.List;
+
 @SpringBootApplication
 public class VeiculosApplication {
 
@@ -15,46 +18,60 @@ public class VeiculosApplication {
 	}
 
 	@Bean
-	CommandLineRunner initDatabase(VehicleRepository repository) {
+	public CommandLineRunner loadData(VehicleRepository repository) {
 		return args -> {
-			// Só insere se a base de dados estiver vazia
-			if (repository.count() == 0) {
-
-				// --- VEÍCULO 1: TESLA (Centro C. Branco) ---
-				Vehicle v1 = new Vehicle();
-				v1.setBrand("Tesla");
-				v1.setModel("Model 3");
-				v1.setLicensePlate("AA-00-ZE");
-				v1.setAvailable(true);
-				v1.setLatitude(39.82219);
-				v1.setLongitude(-7.49087);
-				v1.setPricePerHour(15.0);
-				repository.save(v1);
-
-				// --- VEÍCULO 2: RENAULT (Politécnico/ESTCB) ---
-				Vehicle v2 = new Vehicle();
-				v2.setBrand("Renault");
-				v2.setModel("Clio");
-				v2.setLicensePlate("BB-11-CC");
-				v2.setAvailable(true);
-				v2.setLatitude(39.81977);
-				v2.setLongitude(-7.50298);
-				v2.setPricePerHour(5.0);
-				repository.save(v2);
-
-				// --- VEÍCULO 3: BMW (Indisponível - Estação) ---
-				Vehicle v3 = new Vehicle();
-				v3.setBrand("BMW");
-				v3.setModel("i3");
-				v3.setLicensePlate("CC-22-DD");
-				v3.setAvailable(false); // Já está alugado ou em manutenção
-				v3.setLatitude(39.82500);
-				v3.setLongitude(-7.48000);
-				v3.setPricePerHour(15.0);
-				repository.save(v3);
-
-				System.out.println(">>> Base de dados de Veículos populada com sucesso (com GPS e Preços)!");
+			// Limpa dados antigos para garantir a posição correta
+			if (repository.count() > 0) {
+				repository.deleteAll();
+				System.out.println(">>> Dados antigos limpos. A reposicionar veículos em estrada/estacionamento...");
 			}
+
+			List<Vehicle> veiculos = Arrays.asList(
+					// 1. ESTCB - Estacionamento Principal (Acesso Av. do Empresário)
+					createVehicle("Fiat", "500", "AA-22-BB", 6.50, 39.821360, -7.498835),
+
+					// 2. Hospital Amato Lusitano - Parque de Estacionamento (Frente)
+					createVehicle("Renault", "Clio", "CC-33-DD", 7.00, 39.825313, -7.491624),
+
+					// 3. Estação CP - Estacionamento da Av. da Estação
+					createVehicle("Peugeot", "208", "EE-44-FF", 7.50, 39.819385, -7.489125),
+
+					// 4. Alegro Castelo Branco - Parque de Estacionamento Exterior
+					createVehicle("Citroen", "C3", "GG-55-HH", 6.80, 39.816500, -7.520800),
+
+					// 5. Castelo - Estacionamento na Rua do Castelo (Junto à entrada)
+					createVehicle("VW", "Golf", "II-66-JJ", 12.00, 39.827725, -7.488344),
+
+					// 6. Câmara Municipal - Estacionamento Praça do Município
+					createVehicle("Toyota", "Corolla", "KK-77-LL", 13.50, 39.823589, -7.492534),
+
+					// 7. Jardim do Paço - Estacionamento Rua Bartolomeu da Costa
+					createVehicle("Mercedes", "Classe A", "MM-88-NN", 18.00, 39.825220, -7.494220),
+
+					// 8. Piscina Praia - Parque de Estacionamento
+					createVehicle("Tesla", "Model 3", "OO-99-PP", 25.00, 39.830605, -7.478635),
+
+					// 9. Sé Catedral - Largo da Sé (Zona de paragem)
+					createVehicle("Porsche", "911 Carrera", "QQ-00-RR", 65.00, 39.824150, -7.493180),
+
+					// 10. Rotunda da Europa - Av. da Europa (Zona comercial adjacente)
+					createVehicle("Ferrari", "488 Pista", "SS-11-TT", 120.00, 39.818200, -7.502000)
+			);
+
+			repository.saveAll(veiculos);
+			System.out.println(">>> 10 Veículos estacionados em locais válidos (estrada/parque)!");
 		};
+	}
+
+	private Vehicle createVehicle(String brand, String model, String plate, Double price, Double lat, Double lon) {
+		Vehicle v = new Vehicle();
+		v.setBrand(brand);
+		v.setModel(model);
+		v.setLicensePlate(plate);
+		v.setPricePerHour(price);
+		v.setLatitude(lat);
+		v.setLongitude(lon);
+		v.setAvailable(true);
+		return v;
 	}
 }

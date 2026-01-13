@@ -1,11 +1,10 @@
 package pt.ipcb.ad.frontend_service.controller;
 
 import jakarta.servlet.http.HttpSession;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.*;
 import pt.ipcb.ad.frontend_service.client.RentalClient;
 import pt.ipcb.ad.frontend_service.client.UserClient;
 import pt.ipcb.ad.frontend_service.client.VehicleClient;
@@ -13,6 +12,7 @@ import pt.ipcb.ad.frontend_service.dto.RentalDto;
 import pt.ipcb.ad.frontend_service.dto.UserDto;
 import pt.ipcb.ad.frontend_service.dto.VehicleDto;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -40,9 +40,7 @@ public class WebController {
         UserDto user = (UserDto) session.getAttribute("user");
 
         try {
-            // Obtém todos os veículos do microserviço de veículos
             List<VehicleDto> cars = vehicleClient.getAllVehicles();
-
             model.addAttribute("listaCarros", cars);
             model.addAttribute("cars", cars);
         } catch (Exception e) {
@@ -59,30 +57,35 @@ public class WebController {
 
     // --- ALUGAR CARRO (PROTEGIDO) ---
     @PostMapping("/rent-car/{vehicleId}")
-    public String rentCar(@PathVariable Long vehicleId, HttpSession session) {
-        UserDto user = (UserDto) session.getAttribute("user");
+    public String rentCar(@PathVariable Long vehicleId,
+                          @RequestParam("startTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startTime,
+                          @RequestParam("endTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endTime,
+                          HttpSession session) {
 
-        // O aluguer continua a exigir login
+        UserDto user = (UserDto) session.getAttribute("user");
         if (user == null) return "redirect:/login";
 
         if (!user.getRoles().contains("CONDUTOR")) {
             return "redirect:/cars?erro=Apenas condutores podem alugar!";
         }
 
+        if (endTime.isBefore(startTime)) {
+            return "redirect:/cars?erro=A data de fim deve ser posterior à data de início.";
+        }
+
         try {
             RentalDto rental = new RentalDto();
             rental.setUserId(user.getId());
             rental.setVehicleId(vehicleId);
+            rental.setStartTime(startTime);
+            rental.setEndTime(endTime);
+            rental.setActive(true);
 
-            // Chama o microserviço de alugueres
             rentalClient.startRental(rental);
 
             return "redirect:/my-rentals";
         } catch (Exception e) {
-            // --- ALTERAÇÃO IMPORTANTE: LOG DE ERRO ---
-            // Isto vai imprimir o erro completo na consola do Docker
             e.printStackTrace();
-            // Isto mostra o motivo do erro na barra de endereço do browser
             return "redirect:/cars?erro=Falha ao iniciar aluguer: " + e.getMessage();
         }
     }
@@ -95,8 +98,7 @@ public class WebController {
         try {
             rentalClient.stopRental(id);
         } catch (Exception e) {
-            e.printStackTrace(); // Melhor logging
-            System.out.println("Erro ao terminar aluguer: " + e.getMessage());
+            e.printStackTrace();
         }
 
         return "redirect:/my-rentals";
@@ -157,5 +159,40 @@ public class WebController {
         model.addAttribute("currentURI", "/my-rentals");
 
         return "my-rentals";
+    }
+
+    // --- PERFIL E UPGRADE DE CONTA ---
+    @GetMapping("/profile")
+    public String profile(HttpSession session, Model model) {
+        UserDto user = (UserDto) session.getAttribute("user");
+        if (user == null) return "redirect:/login";
+
+        // Recarregar dados frescos do user
+        try {
+            user = userClient.getUserById(user.getId());
+            session.setAttribute("user", user); // Atualizar sessão
+        } catch(Exception e) {
+            e.printStackTrace();
+        }
+
+        model.addAttribute("user", user);
+        model.addAttribute("isLoggedIn", true);
+        model.addAttribute("currentURI", "/profile");
+        return "profile";
+    }
+
+    @PostMapping("/profile/update")
+    public String updateProfile(@ModelAttribute UserDto userDto, HttpSession session) {
+        UserDto sessionUser = (UserDto) session.getAttribute("user");
+        if (sessionUser == null) return "redirect:/login";
+
+        try {
+            UserDto updated = userClient.updateUser(sessionUser.getId(), userDto);
+            session.setAttribute("user", updated);
+            return "redirect:/profile?success=true";
+        } catch (Exception e) {
+            e.printStackTrace();
+            return "redirect:/profile?error=" + e.getMessage();
+        }
     }
 }
