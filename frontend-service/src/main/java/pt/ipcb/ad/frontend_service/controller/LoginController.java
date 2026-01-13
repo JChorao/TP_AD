@@ -25,19 +25,33 @@ public class LoginController {
         return "login";
     }
 
+    @GetMapping("/blocked")
+    public String blockedPage() {
+        return "blocked"; // Vai procurar o blocked.html
+    }
+
+    // 2. Atualizar o login para detetar o bloqueio
     @PostMapping("/login")
     public String login(@ModelAttribute LoginRequest loginRequest, HttpSession session, Model model) {
         try {
-            UserDto user = userClient.login(loginRequest);
-            if (user != null) {
-                session.setAttribute("user", user);
-                return "redirect:/cars";
+            UserDto userDto = userClient.login(loginRequest);
+            session.setAttribute("user", userDto);
+
+            // Redireciona consoante o role (Admin ou normal)
+            if (userDto.getRoles().contains("ADMIN") || userDto.getRoles().contains("GESTOR_FROTA")) {
+                return "redirect:/users";
             }
+            return "redirect:/cars";
+
+        } catch (feign.FeignException.Forbidden e) {
+            // ERRO 403: O utilizador está BLOQUEADO
+            return "redirect:/blocked";
+
         } catch (Exception e) {
-            System.err.println("Erro ao autenticar: " + e.getMessage());
+            // Outros erros (ex: password errada)
+            model.addAttribute("error", "Login falhou: Credenciais inválidas.");
+            return "login";
         }
-        model.addAttribute("error", "Credenciais inválidas ou serviço indisponível");
-        return "login";
     }
 
     @GetMapping("/logout")

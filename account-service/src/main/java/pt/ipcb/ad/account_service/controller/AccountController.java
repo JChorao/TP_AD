@@ -11,6 +11,7 @@ import pt.ipcb.ad.account_service.repository.UserRepository;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/accounts")
@@ -25,16 +26,31 @@ public class AccountController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody LoginRequest request) {
-        // Procura por email, se não encontrar tenta por username
-        User user = userRepository.findByEmail(request.getEmail())
-                .orElseGet(() -> userRepository.findByUsername(request.getEmail()).orElse(null));
+    public ResponseEntity<?> login(@RequestBody LoginRequest loginRequest) {
+        // 1. Procurar por Username
+        Optional<User> userOpt = userRepository.findByUsername(loginRequest.getEmail());
 
-        if (user != null && passwordEncoder.matches(request.getPassword(), user.getPassword())) {
-            return ResponseEntity.ok(user);
+        // 2. Se não encontrar por Username, procura por Email
+        if (userOpt.isEmpty()) {
+            userOpt = userRepository.findByEmail(loginRequest.getEmail());
         }
 
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Credenciais Inválidas");
+        if (userOpt.isPresent()) {
+            User user = userOpt.get();
+            if (passwordEncoder.matches(loginRequest.getPassword(), user.getPassword())) {
+
+                // --- NOVA VERIFICAÇÃO DE BLOQUEIO ---
+                if (user.isBlocked()) {
+                    // Retorna erro 403 se estiver bloqueado
+                    return ResponseEntity.status(403).body("Conta Bloqueada");
+                }
+                // ------------------------------------
+
+                return ResponseEntity.ok(user);
+            }
+        }
+
+        return ResponseEntity.status(401).body("Credenciais Inválidas");
     }
 
     @GetMapping("/users")

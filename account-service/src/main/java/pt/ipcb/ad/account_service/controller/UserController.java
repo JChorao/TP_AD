@@ -1,5 +1,6 @@
 package pt.ipcb.ad.account_service.controller;
 
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import pt.ipcb.ad.account_service.model.User;
@@ -46,7 +47,6 @@ public class UserController {
         return userRepository.save(user);
     }
 
-    // Endpoint de Atualização
     @PutMapping("/{id}")
     public User updateUser(@PathVariable Long id, @RequestBody User updatedUser) {
         return userRepository.findById(id).map(user -> {
@@ -95,5 +95,16 @@ public class UserController {
 
             return userRepository.save(user);
         }).orElseThrow(() -> new RuntimeException("User not found"));
+    }
+
+    @PutMapping("/{id}/block")
+    public ResponseEntity<User> toggleBlockUser(@PathVariable Long id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Utilizador não encontrado"));
+
+        // Inverte o estado atual (true -> false, false -> true)
+        user.setBlocked(!user.isBlocked());
+
+        return ResponseEntity.ok(userRepository.save(user));
     }
 }
