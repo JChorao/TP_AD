@@ -225,7 +225,7 @@ public class WebController {
 
     @GetMapping("/register")
     public String registerPage(Model model) {
-        model.addAttribute("user", new UserDto());
+        model.addAttribute("user", new UserDto()); // Binds UserDto to the form
         return "register";
     }
 
