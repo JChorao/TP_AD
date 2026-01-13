@@ -29,4 +29,7 @@ public interface UserClient {
 
     @PutMapping("/accounts/users/{id}/block")
     void blockUser(@PathVariable("id") Long id, @RequestParam("block") boolean block);
+
+    @PutMapping("/accounts/users/{id}/location")
+    UserDto updateLocation(@PathVariable("id") Long id, @RequestParam("latitude") Double latitude, @RequestParam("longitude") Double longitude);
 }

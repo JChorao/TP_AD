@@ -39,7 +39,7 @@ public class LoginController {
 
             // Redireciona consoante o role (Admin ou normal)
             if (userDto.getRoles().contains("ADMIN") || userDto.getRoles().contains("GESTOR_FROTA")) {
-                return "redirect:/users";
+                return "redirect:/cars";
             }
             return "redirect:/cars";
 

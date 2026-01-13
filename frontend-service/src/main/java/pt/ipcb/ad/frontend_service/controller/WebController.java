@@ -372,4 +372,21 @@ public class WebController {
         }
     }
 
+    @PostMapping("/users/location")
+    public String updateUserLocation(@RequestParam Double latitude, @RequestParam Double longitude, HttpSession session) {
+        UserDto user = (UserDto) session.getAttribute("user");
+        if (user == null) return "redirect:/login";
+
+        try {
+            // Chama o novo endpoint do backend
+            UserDto updated = userClient.updateLocation(user.getId(), latitude, longitude);
+
+            // Atualiza o utilizador na sessão para o mapa refletir a mudança após o refresh
+            session.setAttribute("user", updated);
+
+            return "redirect:/cars?successLoc=true";
+        } catch (Exception e) {
+            return "redirect:/cars?errorLoc=true";
+        }
+    }
 }
