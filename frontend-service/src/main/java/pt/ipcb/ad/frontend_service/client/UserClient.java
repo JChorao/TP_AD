@@ -2,24 +2,28 @@ package pt.ipcb.ad.frontend_service.client;
 
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.*;
+import pt.ipcb.ad.frontend_service.dto.LoginRequest;
 import pt.ipcb.ad.frontend_service.dto.UserDto;
 import java.util.List;
 
 @FeignClient(name = "account-service")
 public interface UserClient {
 
-    @GetMapping("/users/{username}")
+    @PostMapping("/accounts/login")
+    UserDto login(@RequestBody LoginRequest loginRequest);
+
+    @GetMapping("/accounts/users")
+    List<UserDto> getAllUsers();
+
+    @GetMapping("/accounts/users/username/{username}")
     UserDto getUserByUsername(@PathVariable("username") String username);
 
-    @GetMapping("/users/id/{id}")
+    @GetMapping("/accounts/users/{id}")
     UserDto getUserById(@PathVariable("id") Long id);
 
-    @PostMapping("/users")
-    UserDto createUser(@RequestBody UserDto user); // @RequestBody é importante aqui
+    @PostMapping("/accounts/users")
+    UserDto createUser(@RequestBody UserDto user);
 
-    @PutMapping("/users/{id}")
+    @PutMapping("/accounts/users/{id}")
     UserDto updateUser(@PathVariable("id") Long id, @RequestBody UserDto user);
-
-    @GetMapping("/users")
-    List<UserDto> getAllUsers();
 }

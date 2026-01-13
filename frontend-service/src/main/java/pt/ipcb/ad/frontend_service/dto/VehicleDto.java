@@ -5,13 +5,11 @@ import lombok.Data;
 @Data
 public class VehicleDto {
     private Long id;
+    private String licensePlate;
     private String brand;
     private String model;
-    private String licensePlate;
+    private double pricePerHour; // Certifica-te que o nome é igual ao do backend
     private boolean available;
-
-    // --- NOVOS CAMPOS ---
-    private Double pricePerHour;
-    private Double latitude;
-    private Double longitude;
+    private double latitude;
+    private double longitude;
 }

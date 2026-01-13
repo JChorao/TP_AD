@@ -34,23 +34,28 @@ public class WebController {
         return "redirect:/cars";
     }
 
-    // --- LISTA DE CARROS (ACESSO PÚBLICO) ---
     @GetMapping("/cars")
-    public String listCars(Model model, HttpSession session) {
+    public String carsPage(Model model, HttpSession session) {
+        // 1. Tenta obter o utilizador da sessão
         UserDto user = (UserDto) session.getAttribute("user");
+
+        // 2. Se não houver user, redireciona para o login
+        if (user == null) {
+            return "redirect:/login";
+        }
+
+        // 3. Adiciona as variáveis que o navbar.html EXIGE
+        model.addAttribute("user", user);
+        model.addAttribute("isLoggedIn", true); // <--- ESTA LINHA RESOLVE O ERRO 500
 
         try {
             List<VehicleDto> cars = vehicleClient.getAllVehicles();
-            model.addAttribute("listaCarros", cars);
             model.addAttribute("cars", cars);
         } catch (Exception e) {
-            System.out.println("Erro ao obter carros: " + e.getMessage());
-            model.addAttribute("erro", "Serviço de veículos indisponível.");
+            System.err.println("Erro ao listar carros: " + e.getMessage());
+            model.addAttribute("cars", List.of());
+            model.addAttribute("error", "Serviço de veículos indisponível.");
         }
-
-        model.addAttribute("user", user);
-        model.addAttribute("isLoggedIn", user != null);
-        model.addAttribute("currentURI", "/cars");
 
         return "cars";
     }

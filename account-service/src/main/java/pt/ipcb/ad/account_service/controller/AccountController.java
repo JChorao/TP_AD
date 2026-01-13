@@ -1,15 +1,60 @@
 package pt.ipcb.ad.account_service.controller;
 
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.web.bind.annotation.*;
+import pt.ipcb.ad.account_service.dto.LoginRequest;
+import pt.ipcb.ad.account_service.model.User;
+import pt.ipcb.ad.account_service.repository.UserRepository;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/accounts")
 public class AccountController {
 
-    @GetMapping("/test")
-    public String test() {
-        return "Olá! O Account Service (Car Sharing) está a funcionar via Gateway.";
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
+
+    public AccountController(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+        this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<?> login(@RequestBody LoginRequest request) {
+        // Procura por email, se não encontrar tenta por username
+        User user = userRepository.findByEmail(request.getEmail())
+                .orElseGet(() -> userRepository.findByUsername(request.getEmail()).orElse(null));
+
+        if (user != null && passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+            return ResponseEntity.ok(user);
+        }
+
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Credenciais Inválidas");
+    }
+
+    @GetMapping("/users")
+    public List<User> getAllUsers() {
+        return userRepository.findAll();
+    }
+
+    @GetMapping("/users/{username}")
+    public ResponseEntity<User> getUserByUsername(@PathVariable String username) {
+        return userRepository.findByUsername(username)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    @PutMapping("/users/{id}")
+    public ResponseEntity<User> updateUser(@PathVariable Long id, @RequestBody User userDetails) {
+        return userRepository.findById(id).map(user -> {
+            user.setEmail(userDetails.getEmail());
+            user.setAddress(userDetails.getAddress());
+            user.setPhoneNumber(userDetails.getPhoneNumber());
+            // Não atualizamos a password aqui por segurança neste exemplo simples
+            return ResponseEntity.ok(userRepository.save(user));
+        }).orElse(ResponseEntity.notFound().build());
     }
 }

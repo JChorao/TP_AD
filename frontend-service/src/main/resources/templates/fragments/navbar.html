@@ -30,10 +30,10 @@
                 <li class="nav-item dropdown" th:if="${isLoggedIn}">
                     <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                         <div class="text-end me-2 d-none d-md-block" style="line-height: 1.2;">
-                            <div class="fw-bold text-white" th:text="${user.name}">Nome User</div>
+                            <div class="fw-bold text-white" th:text="${user.username}">Nome User</div>
                             <small class="text-secondary" style="font-size: 0.75rem;" th:text="${user.email}">email</small>
                         </div>
-                        <img th:src="@{'https://ui-avatars.com/api/?name=' + ${user.name} + '&background=random&color=fff'}"
+                        <img th:src="@{'https://ui-avatars.com/api/?name=' + ${user.username} + '&background=random&color=fff'}"
                              class="rounded-circle border border-2 border-secondary" width="40" height="40" alt="Avatar">
                     </a>
 

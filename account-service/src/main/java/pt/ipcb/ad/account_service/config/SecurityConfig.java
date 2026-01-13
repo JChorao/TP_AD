@@ -13,19 +13,19 @@ import org.springframework.security.web.SecurityFilterChain;
 public class SecurityConfig {
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http
-                .csrf(csrf -> csrf.disable()) // Desativa proteção CSRF para testes
-                .authorizeHttpRequests(auth -> auth
-                        .anyRequest().permitAll() // PERMITE TUDO (Só para desenvolvimento inicial)
-                )
-                .headers(headers -> headers.frameOptions(frame -> frame.disable())); // Necessário para o H2 Console
-
-        return http.build();
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
     }
 
     @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        http
+                .csrf(csrf -> csrf.disable())
+                .authorizeHttpRequests(auth -> auth
+                        // Deixa o Frontend e o Gateway acederem aos endpoints de conta
+                        .requestMatchers("/accounts/**", "/users/**", "/actuator/**").permitAll()
+                        .anyRequest().authenticated()
+                );
+        return http.build();
     }
 }

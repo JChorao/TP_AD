@@ -1,34 +1,21 @@
 package pt.ipcb.ad.rental_service.model;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 
 @Entity
-@Data
-@AllArgsConstructor
-@NoArgsConstructor
+@Data // Garante que tens o @Data do Lombok para gerar os setters automaticamente
 public class Rental {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private Long userId;       // Quem alugou
-    private Long vehicleId;    // Qual carro
-
-    private LocalDateTime startTime; // Início do aluguer
-    private LocalDateTime endTime;   // Fim (pode ser null se ainda estiver a andar)
-
-    private Double pricePerHour;     // Preço congelado no momento do aluguer
-    private boolean active;          // Se o aluguer está a decorrer
-
-    private Double totalPrice; // Guarda o preço final da viagem
-
-    private Double startLat;
-    private Double startLon;
-    private Double endLat;
-    private Double endLon;
-    private Double distanceKms;
+    private Long userId;
+    private Long vehicleId;
+    private LocalDateTime startTime;
+    private LocalDateTime endTime;
+    private double distance; // CAMPO QUE ESTAVA EM FALTA
+    private double price;    // CAMPO QUE ESTAVA EM FALTA
+    private boolean active;
 }
