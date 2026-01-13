@@ -19,4 +19,5 @@ public interface VehicleClient {
 
     @PutMapping("/vehicles/{id}/availability")
     void updateAvailability(@PathVariable("id") Long id, @RequestParam("available") boolean available);
+
 }

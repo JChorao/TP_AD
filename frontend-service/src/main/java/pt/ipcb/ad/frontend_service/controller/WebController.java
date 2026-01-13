@@ -59,6 +59,46 @@ public class WebController {
         return "cars";
     }
 
+    @GetMapping("/cars/add")
+    public String showAddCarPage(HttpSession session, Model model) {
+        UserDto user = (UserDto) session.getAttribute("user");
+
+        // 1. Verificação de Segurança: Apenas ADMIN ou GESTOR_FROTA
+        if (user == null || (!user.getRoles().contains("ADMIN") && !user.getRoles().contains("GESTOR_FROTA"))) {
+            return "redirect:/cars?error=Acesso Negado";
+        }
+
+        model.addAttribute("vehicle", new VehicleDto());
+        return "add-vehicle";
+    }
+
+    @PostMapping("/cars/add")
+    public String addCarProcess(@ModelAttribute VehicleDto vehicleDto, HttpSession session, Model model) {
+        UserDto user = (UserDto) session.getAttribute("user");
+
+        if (user == null || (!user.getRoles().contains("ADMIN") && !user.getRoles().contains("GESTOR_FROTA"))) {
+            return "redirect:/login";
+        }
+
+        try {
+            // CORREÇÃO: Usar setAvailable(true) em vez de setStatus
+            vehicleDto.setAvailable(true);
+
+            // Definir coordenadas padrão se não forem preenchidas (opcional)
+            if (vehicleDto.getLatitude() == 0 && vehicleDto.getLongitude() == 0) {
+                vehicleDto.setLatitude(39.82219); // Ex: Castelo Branco
+                vehicleDto.setLongitude(-7.49087);
+            }
+
+            vehicleClient.createVehicle(vehicleDto);
+            return "redirect:/cars?success=Veículo criado com sucesso";
+        } catch (Exception e) {
+            model.addAttribute("error", "Erro ao criar veículo: " + e.getMessage());
+            model.addAttribute("vehicle", vehicleDto);
+            return "add-vehicle"; // Volta para a página se der erro
+        }
+    }
+
     // --- ALUGAR CARRO (PROTEGIDO) ---
     @PostMapping("/rent-car/{vehicleId}")
     public String rentCar(@PathVariable Long vehicleId,

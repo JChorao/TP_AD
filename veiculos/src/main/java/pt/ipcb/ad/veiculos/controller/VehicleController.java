@@ -1,6 +1,7 @@
 package pt.ipcb.ad.veiculos.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import pt.ipcb.ad.veiculos.model.Vehicle;
 import pt.ipcb.ad.veiculos.repository.VehicleRepository;
@@ -14,12 +15,6 @@ public class VehicleController {
     @Autowired
     private VehicleRepository repository;
 
-    // Teste simples
-    @GetMapping("/test")
-    public String test() {
-        return "O Microserviço de Veículos (Porta 8082) está a funcionar!";
-    }
-
     // Listar todos os carros
     @GetMapping("/viewall")
     public List<Vehicle> getAllVehicles() {
@@ -32,12 +27,6 @@ public class VehicleController {
                 .orElseThrow(() -> new RuntimeException("Veículo não encontrado"));
     }
 
-    // Adicionar um carro novo (via POST)
-    @PostMapping
-    public Vehicle addVehicle(@RequestBody Vehicle vehicle) {
-        return repository.save(vehicle);
-    }
-
     @PutMapping("/{id}/availability")
     public Vehicle updateAvailability(@PathVariable Long id, @RequestParam boolean available) {
         Vehicle vehicle = repository.findById(id)
@@ -45,5 +34,12 @@ public class VehicleController {
 
         vehicle.setAvailable(available);
         return repository.save(vehicle);
+    }
+
+    @PostMapping
+    public ResponseEntity<Vehicle> createVehicle(@RequestBody Vehicle vehicle) {
+        // Garante que o ID é nulo para criar um novo e não atualizar
+        Vehicle savedVehicle = repository.save(vehicle);
+        return ResponseEntity.ok(savedVehicle);
     }
 }
