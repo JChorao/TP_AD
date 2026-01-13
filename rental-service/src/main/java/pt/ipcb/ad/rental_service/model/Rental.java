@@ -16,6 +16,6 @@ public class Rental {
     private LocalDateTime startTime;
     private LocalDateTime endTime;
     private double distance; // CAMPO QUE ESTAVA EM FALTA
-    private double price;    // CAMPO QUE ESTAVA EM FALTA
+    private double totalPrice; // CAMPO QUE ESTAVA EM FALTA
     private boolean active;
 }

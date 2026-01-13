@@ -59,6 +59,7 @@ public class AccountServiceApplication {
 				// 3. CONDUTOR (Driver)
 				User condutor = new User();
 				condutor.setUsername("condutor");
+				condutor.setRoles(Set.of("CONDUTOR"));
 				condutor.setPassword(passwordEncoder.encode("condutor123"));
 				condutor.setEmail("joao.condutor@email.com");
 				condutor.setAddress("Av. do Empresário, Castelo Branco");

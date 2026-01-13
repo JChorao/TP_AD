@@ -48,11 +48,11 @@ public class RentalController {
         try {
             double distance = gpsClient.getDistance(39.82, -7.49, 39.85, -7.50);
             rental.setDistance(distance);
-            rental.setPrice(distance * 0.50);
+            rental.setTotalPrice(distance * 0.50);
         } catch (Exception e) {
             // Se o Feign falhar antes do Circuit Breaker atuar
             rental.setDistance(0.0);
-            rental.setPrice(10.0);
+            rental.setTotalPrice(10.0);
         }
 
         return rentalRepository.save(rental);
@@ -69,7 +69,7 @@ public class RentalController {
         rental.setEndTime(LocalDateTime.now());
         rental.setActive(false);
         rental.setDistance(0.0);
-        rental.setPrice(10.0); // Taxa fixa se o GPS falhar
+        rental.setTotalPrice(10.0); // Taxa fixa se o GPS falhar
         return rentalRepository.save(rental);
     }
 }

@@ -46,13 +46,13 @@
           <td th:text="${trip.endTime != null} ? ${#temporals.format(trip.endTime, 'dd/MM/yyyy HH:mm')} : '--'">--</td>
 
           <td>
-             <span th:if="${trip.totalPrice != null}"
+             <span th:if="${trip.totalPrice != null and trip.totalPrice > 0}"
                    th:text="${#numbers.formatCurrency(trip.totalPrice)}"
                    class="fw-bold text-dark">
              </span>
-            <span th:if="${trip.totalPrice == null}" class="text-muted small">
-                 (A calcular...)
-             </span>
+              <span th:if="${trip.totalPrice == null or trip.totalPrice == 0}" class="text-muted small">
+                    (A calcular...)
+              </span>
           </td>
 
           <td>
