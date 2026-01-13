@@ -17,10 +17,11 @@ public class UserResponseDto {
     private String licenseNumber;
     private LocalDate licenseIssueDate;
     private LocalDate licenseExpiryDate;
+    // --- ADICIONE ESTAS DUAS LINHAS ---
     private Double latitude;
     private Double longitude;
 
-    // Construtor manual ou usa um Mapper
+    // Atualize o construtor para incluir os novos campos no fim
     public UserResponseDto(Long id, String username, String email, String phoneNumber, String address, Set<String> roles, boolean blocked, String licenseNumber, LocalDate licenseIssueDate, LocalDate licenseExpiryDate, Double latitude, Double longitude) {
         this.id = id;
         this.username = username;

@@ -331,18 +331,20 @@ public class WebController {
     @PostMapping("/manage-vehicles/create")
     public String createVehicle(@ModelAttribute VehicleDto vehicleDto, HttpSession session) {
         UserDto user = (UserDto) session.getAttribute("user");
-
-        // TEM DE TER ESTA LINHA COM "GESTOR_FROTA"
         if (user == null || (!user.getRoles().contains("ADMIN") && !user.getRoles().contains("GESTOR_FROTA"))) {
             return "redirect:/login";
         }
 
         try {
+            // Log para debug no terminal do Docker
+            System.out.println("Criando veículo: " + vehicleDto.getBrand() + " em Lat: " + vehicleDto.getLatitude());
+
             vehicleDto.setAvailable(true);
             vehicleClient.createVehicle(vehicleDto);
             return "redirect:/manage-vehicles?success=Veículo criado com sucesso";
         } catch (Exception e) {
-            return "redirect:/manage-vehicles?error=Erro ao criar veículo";
+            e.printStackTrace();
+            return "redirect:/manage-vehicles?error=Dados inválidos ou serviço offline";
         }
     }
 

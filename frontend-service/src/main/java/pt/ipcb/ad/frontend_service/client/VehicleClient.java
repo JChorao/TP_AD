@@ -8,22 +8,23 @@ import java.util.List;
 @FeignClient(name = "vehicle-service")
 public interface VehicleClient {
 
+    // Lista todos os veículos
     @GetMapping("/vehicles/viewall")
     List<VehicleDto> getAllVehicles();
 
+    // Cria um novo veículo
     @PostMapping("/vehicles")
     VehicleDto createVehicle(@RequestBody VehicleDto vehicle);
 
-    @GetMapping("/vehicles/{id}")
-    VehicleDto getVehicleById(@PathVariable("id") Long id);
-
+    // --- MÉTODO ADICIONADO PARA O WEB CONTROLLER ---
     @PutMapping("/vehicles/{id}")
     VehicleDto updateVehicle(@PathVariable("id") Long id, @RequestBody VehicleDto vehicle);
 
-    @DeleteMapping("/vehicles/{id}")
-    void deleteVehicle(@PathVariable("id") Long id);
-
+    // Atualiza apenas a disponibilidade
     @PutMapping("/vehicles/{id}/availability")
     void updateAvailability(@PathVariable("id") Long id, @RequestParam("available") boolean available);
 
+    // Remove um veículo
+    @DeleteMapping("/vehicles/{id}")
+    void deleteVehicle(@PathVariable("id") Long id);
 }

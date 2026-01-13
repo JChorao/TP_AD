@@ -21,4 +21,6 @@ public class UserDto {
     private String licenseNumber;
     private LocalDate licenseIssueDate;
     private LocalDate licenseExpiryDate;
+    private Double latitude;
+    private Double longitude;
 }
