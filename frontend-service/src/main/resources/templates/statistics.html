@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Pagamentos e Estatísticas</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+</head>
+<body>
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<div class="container mt-5">
+    <h2 class="mb-4"><i class="fa-solid fa-chart-line me-2"></i>Relatório de Pagamentos</h2>
+
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card bg-success text-white shadow-sm">
+                <div class="card-body">
+                    <h5>Total Faturado</h5>
+                    <h2 class="fw-bold" th:text="${#numbers.formatCurrency(totalRevenue)}"></h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card bg-info text-white shadow-sm">
+                <div class="card-body">
+                    <h5>Viagens Pagas</h5>
+                    <h2 class="fw-bold" th:text="${totalTrips}"></h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-header bg-white">
+            <h5 class="mb-0">Histórico de Transações</h5>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-striped table-hover mb-0 align-middle">
+                    <thead class="table-light">
+                    <tr>
+                        <th>ID</th>
+                        <th>Utilizador</th>
+                        <th>Veículo</th>
+                        <th>Data</th>
+                        <th class="text-end">Valor</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="pay : ${payments}">
+                        <td th:text="'#' + ${pay.id}"></td>
+                        <td>
+                            <span class="fw-bold" th:text="${pay.userName}"></span>
+                            <br><small class="text-muted" th:text="'ID: ' + ${pay.userId}"></small>
+                        </td>
+                        <td>
+                            <i class="fa-solid fa-car me-1 text-secondary"></i>
+                            <span th:text="${pay.vehicleInfo}"></span>
+                        </td>
+                        <td th:text="${#temporals.format(pay.paymentDate, 'dd/MM/yyyy HH:mm')}"></td>
+                        <td class="text-end fw-bold text-success"
+                            th:text="${#numbers.formatCurrency(pay.amount)}"></td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(payments)}">
+                        <td colspan="5" class="text-center py-4 text-muted">
+                            Não existem pagamentos registados.
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -3,12 +3,14 @@ package pt.ipcb.ad.rental_service.controller;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import org.springframework.web.bind.annotation.*;
 import pt.ipcb.ad.rental_service.client.GpsClient;
+import pt.ipcb.ad.rental_service.client.PaymentClient;
 import pt.ipcb.ad.rental_service.client.VehicleClient;
-import pt.ipcb.ad.rental_service.dto.VehicleDto; // <--- Import Adicionado
+import pt.ipcb.ad.rental_service.dto.PaymentDto;
+import pt.ipcb.ad.rental_service.dto.VehicleDto;
 import pt.ipcb.ad.rental_service.model.Rental;
 import pt.ipcb.ad.rental_service.repository.RentalRepository;
 
-import java.time.Duration; // <--- Import Adicionado
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -19,11 +21,16 @@ public class RentalController {
     private final RentalRepository rentalRepository;
     private final GpsClient gpsClient;
     private final VehicleClient vehicleClient;
+    private final PaymentClient paymentClient;
 
-    public RentalController(RentalRepository rentalRepository, GpsClient gpsClient, VehicleClient vehicle) {
+    public RentalController(RentalRepository rentalRepository,
+                            GpsClient gpsClient,
+                            VehicleClient vehicle,
+                            PaymentClient paymentClient) {
         this.rentalRepository = rentalRepository;
         this.gpsClient = gpsClient;
         this.vehicleClient = vehicle;
+        this.paymentClient = paymentClient;
     }
 
     @PostMapping("/start")
@@ -44,41 +51,42 @@ public class RentalController {
         rental.setEndTime(LocalDateTime.now());
         rental.setActive(false);
 
-        // --- LINHA PARA TESTAR 1 HORA (Descomente para simular) ---
+        // --- LINHA PARA TESTES (Apagar em produção) ---
         // rental.setStartTime(LocalDateTime.now().minusHours(1));
-        // ----------------------------------------------------------
+        // ----------------------------------------------
 
         try {
-            // 1. Obter os dados do Veículo (para saber o preço/hora)
             VehicleDto vehicle = vehicleClient.getVehicleById(rental.getVehicleId());
-
-            // Preço por hora (fallback para 10.0 se for nulo)
             Double pricePerHour = (vehicle != null && vehicle.getPricePerHour() != null)
                     ? vehicle.getPricePerHour()
                     : 10.0;
 
-            // 2. Calcular a duração em Horas
             Duration duration = Duration.between(rental.getStartTime(), rental.getEndTime());
             long minutes = duration.toMinutes();
-
-            // Converte minutos para horas (ex: 30 min = 0.5 horas)
             double hours = minutes / 60.0;
+            if (hours == 0) hours = 0.0166;
 
-            // Proteção para testes muito rápidos (cobra pelo menos 1 minuto se for 0)
-            if (hours == 0) hours = 0.1;
-
-            // 3. Calcular Preço Base
             double basePrice = hours * pricePerHour;
+            double finalPrice = basePrice * 1.07; // Taxa 7%
 
-            // 4. Adicionar Taxa de 7%
-            double finalPrice = basePrice * 1.07;
-
-            // Atualizar o aluguer
             rental.setTotalPrice(finalPrice);
-            rental.setDistance(0.0); // Distância removida da lógica
+            rental.setDistance(0.0);
+
+            // --- PROCESSAR PAGAMENTO ---
+            try {
+                PaymentDto payment = new PaymentDto();
+                payment.setRentalId(rental.getId());
+                payment.setUserId(rental.getUserId());       // Envia User
+                payment.setVehicleId(rental.getVehicleId()); // Envia Carro
+                payment.setAmount(finalPrice);
+
+                paymentClient.processPayment(payment);
+                System.out.println("Pagamento enviado: " + finalPrice);
+            } catch (Exception e) {
+                System.err.println("Erro no pagamento: " + e.getMessage());
+            }
 
         } catch (Exception e) {
-            // Em caso de erro (ex: Vehicle Service em baixo), aplica taxa mínima
             e.printStackTrace();
             rental.setTotalPrice(5.0);
             rental.setDistance(0.0);
@@ -97,7 +105,7 @@ public class RentalController {
         rental.setEndTime(LocalDateTime.now());
         rental.setActive(false);
         rental.setDistance(0.0);
-        rental.setTotalPrice(10.0); // Valor fixo de erro
+        rental.setTotalPrice(10.0);
         return rentalRepository.save(rental);
     }
 }

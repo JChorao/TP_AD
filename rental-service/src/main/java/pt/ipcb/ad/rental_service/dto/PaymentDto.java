@@ -1,21 +1,20 @@
 package pt.ipcb.ad.rental_service.dto;
 
+import lombok.Data;
+
+@Data
 public class PaymentDto {
     private Long rentalId;
+    private Long userId;      // Adicionado
+    private Long vehicleId;   // Adicionado
     private Double amount;
 
-    // Construtores
     public PaymentDto() {}
 
-    public PaymentDto(Long rentalId, Double amount) {
+    public PaymentDto(Long rentalId, Long userId, Long vehicleId, Double amount) {
         this.rentalId = rentalId;
+        this.userId = userId;
+        this.vehicleId = vehicleId;
         this.amount = amount;
     }
-
-    // Getters e Setters
-    public Long getRentalId() { return rentalId; }
-    public void setRentalId(Long rentalId) { this.rentalId = rentalId; }
-
-    public Double getAmount() { return amount; }
-    public void setAmount(Double amount) { this.amount = amount; }
 }

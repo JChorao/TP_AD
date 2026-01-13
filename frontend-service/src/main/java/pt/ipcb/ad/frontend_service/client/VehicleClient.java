@@ -17,6 +17,12 @@ public interface VehicleClient {
     @GetMapping("/vehicles/{id}")
     VehicleDto getVehicleById(@PathVariable("id") Long id);
 
+    @PutMapping("/vehicles/{id}")
+    VehicleDto updateVehicle(@PathVariable("id") Long id, @RequestBody VehicleDto vehicle);
+
+    @DeleteMapping("/vehicles/{id}")
+    void deleteVehicle(@PathVariable("id") Long id);
+
     @PutMapping("/vehicles/{id}/availability")
     void updateAvailability(@PathVariable("id") Long id, @RequestParam("available") boolean available);
 }

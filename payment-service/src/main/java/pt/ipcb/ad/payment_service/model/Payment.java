@@ -4,20 +4,23 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import lombok.Data; // Lombok gera Getters, Setters e Construtores
+import lombok.Data;
 
 import java.time.LocalDateTime;
 
 @Entity
-@Data // O Lombok faz a magia aqui. Se não usares Lombok, cria os Getters/Setters.
+@Data
 public class Payment {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private Long rentalId;      // ID do aluguer vindo do Rental-Service
-    private Double amount;      // Valor a pagar
+    private Long rentalId;
+    private Long userId;      // NOVO: Quem pagou
+    private Long vehicleId;   // NOVO: Que carro usou
+
+    private Double amount;
     private LocalDateTime paymentDate;
-    private String status;      // "SUCESSO", "PENDENTE"
+    private String status;
 }

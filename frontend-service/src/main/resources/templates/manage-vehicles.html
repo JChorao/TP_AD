@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <title>Gestão de Frota</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+</head>
+<body>
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<div class="container mt-5">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="fa-solid fa-truck-moving me-2"></i>Gestão de Frota</h2>
+    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addVehicleModal">
+      <i class="fa-solid fa-plus me-2"></i>Adicionar Veículo
+    </button>
+  </div>
+
+  <div th:if="${param.success}" class="alert alert-success alert-dismissible fade show">
+    <span th:text="${param.success}"></span>
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+  </div>
+  <div th:if="${param.error}" class="alert alert-danger alert-dismissible fade show">
+    <span th:text="${param.error}"></span>
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+  </div>
+
+  <div class="card shadow-sm">
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-striped table-hover mb-0 align-middle">
+          <thead class="table-dark">
+          <tr>
+            <th>ID</th>
+            <th>Marca / Modelo</th>
+            <th>Matrícula</th>
+            <th>Preço/Hora</th>
+            <th>Localização (Lat, Lon)</th>
+            <th>Estado</th>
+            <th class="text-end">Ações</th>
+          </tr>
+          </thead>
+          <tbody>
+          <tr th:each="car : ${cars}">
+            <td th:text="'#' + ${car.id}"></td>
+            <td class="fw-bold">
+              <i class="fa-solid fa-car me-2 text-secondary"></i>
+              <span th:text="${car.brand} + ' ' + ${car.model}"></span>
+            </td>
+            <td><span class="badge bg-light text-dark border" th:text="${car.licensePlate}"></span></td>
+            <td class="text-success fw-bold" th:text="${car.pricePerHour} + ' €'"></td>
+            <td>
+              <small class="text-muted">
+                <i class="fa-solid fa-map-pin me-1"></i>
+                <span th:text="${car.latitude} + ', ' + ${car.longitude}"></span>
+              </small>
+            </td>
+            <td>
+              <span th:if="${car.available}" class="badge bg-success">Disponível</span>
+              <span th:unless="${car.available}" class="badge bg-danger">Ocupado</span>
+            </td>
+            <td class="text-end">
+              <a th:href="@{/manage-vehicles/delete/{id}(id=${car.id})}"
+                 class="btn btn-sm btn-outline-danger"
+                 onclick="return confirm('Tem a certeza que deseja remover este veículo?');">
+                <i class="fa-solid fa-trash"></i>
+              </a>
+            </td>
+          </tr>
+          <tr th:if="${#lists.isEmpty(cars)}">
+            <td colspan="7" class="text-center py-4 text-muted">
+              Nenhum veículo registado na frota.
+            </td>
+          </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="addVehicleModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form th:action="@{/manage-vehicles/create}" th:object="${newVehicle}" method="post">
+        <div class="modal-header bg-primary text-white">
+          <h5 class="modal-title"><i class="fa-solid fa-car-side me-2"></i>Novo Veículo</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="row mb-3">
+            <div class="col-6">
+              <label class="form-label">Marca</label>
+              <input type="text" class="form-control" name="brand" required placeholder="Ex: Tesla">
+            </div>
+            <div class="col-6">
+              <label class="form-label">Modelo</label>
+              <input type="text" class="form-control" name="model" required placeholder="Ex: Model 3">
+            </div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Matrícula</label>
+            <input type="text" class="form-control" name="licensePlate" required placeholder="AA-00-AA">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Preço por Hora (€)</label>
+            <input type="number" step="0.01" class="form-control" name="pricePerHour" required value="10.0">
+          </div>
+          <div class="row mb-3">
+            <div class="col-6">
+              <label class="form-label">Latitude</label>
+              <input type="number" step="any" class="form-control" name="latitude" required value="39.82">
+            </div>
+            <div class="col-6">
+              <label class="form-label">Longitude</label>
+              <input type="number" step="any" class="form-control" name="longitude" required value="-7.49">
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-primary">Guardar Veículo</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -14,13 +14,6 @@ public class VehicleController {
     @Autowired
     private VehicleRepository repository;
 
-    // Teste simples
-    @GetMapping("/test")
-    public String test() {
-        return "O Microserviço de Veículos (Porta 8082) está a funcionar!";
-    }
-
-    // Listar todos os carros
     @GetMapping("/viewall")
     public List<Vehicle> getAllVehicles() {
         return repository.findAll();
@@ -32,17 +25,38 @@ public class VehicleController {
                 .orElseThrow(() -> new RuntimeException("Veículo não encontrado"));
     }
 
-    // Adicionar um carro novo (via POST)
     @PostMapping
     public Vehicle addVehicle(@RequestBody Vehicle vehicle) {
+        // Garante que default é true se não vier preenchido
+        if (!vehicle.isAvailable()) vehicle.setAvailable(true);
         return repository.save(vehicle);
     }
 
+    // --- NOVO: ATUALIZAR VEÍCULO ---
+    @PutMapping("/{id}")
+    public Vehicle updateVehicle(@PathVariable Long id, @RequestBody Vehicle updated) {
+        return repository.findById(id).map(v -> {
+            v.setBrand(updated.getBrand());
+            v.setModel(updated.getModel());
+            v.setLicensePlate(updated.getLicensePlate());
+            v.setPricePerHour(updated.getPricePerHour());
+            v.setLatitude(updated.getLatitude());
+            v.setLongitude(updated.getLongitude());
+            return repository.save(v);
+        }).orElseThrow(() -> new RuntimeException("Veículo não encontrado"));
+    }
+
+    // --- NOVO: APAGAR VEÍCULO ---
+    @DeleteMapping("/{id}")
+    public void deleteVehicle(@PathVariable Long id) {
+        repository.deleteById(id);
+    }
+
+    // Mantemos este para compatibilidade com o Aluguer
     @PutMapping("/{id}/availability")
     public Vehicle updateAvailability(@PathVariable Long id, @RequestParam boolean available) {
         Vehicle vehicle = repository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Veículo não encontrado"));
-
         vehicle.setAvailable(available);
         return repository.save(vehicle);
     }
