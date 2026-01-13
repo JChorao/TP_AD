@@ -165,6 +165,7 @@ public class WebController {
 
         return "my-rentals";
     }
+    
 
     // --- PERFIL E UPGRADE DE CONTA ---
     @GetMapping("/profile")

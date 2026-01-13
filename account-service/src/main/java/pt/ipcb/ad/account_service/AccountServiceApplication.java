@@ -36,7 +36,7 @@ public class AccountServiceApplication {
 				admin.setAddress("Serviços Centrais IPCB, Castelo Branco");
 				admin.setPhoneNumber("910000000");
 				admin.setBlocked(false);
-				admin.setRoles(Set.of("ADMIN", "USER"));
+				admin.setRoles(Set.of("ADMIN", "CONDUTOR"));
 				userRepository.save(admin);
 
 				// 2. GESTOR (Manager)
@@ -47,7 +47,7 @@ public class AccountServiceApplication {
 				gestor.setAddress("Escola Superior de Tecnologia");
 				gestor.setPhoneNumber("920000000");
 				gestor.setBlocked(false);
-				gestor.setRoles(Set.of("MANAGER", "USER"));
+				gestor.setRoles(Set.of("GESTOR_FROTA", "CONDUTOR"));
 				userRepository.save(gestor);
 
 				// 3. CONDUTOR (Driver)
@@ -69,7 +69,7 @@ public class AccountServiceApplication {
 				condutor.setLongitude(-7.49087);
 
 				condutor.setBlocked(false);
-				condutor.setRoles(Set.of("DRIVER", "USER"));
+				condutor.setRoles(Set.of("CONDUTOR"));
 				userRepository.save(condutor);
 
 				// 4. PASSAGEIRO (Passenger)
@@ -88,7 +88,7 @@ public class AccountServiceApplication {
 				passageiro.setLongitude(-7.49300);
 
 				passageiro.setBlocked(false);
-				passageiro.setRoles(Set.of("PASSENGER", "USER"));
+				passageiro.setRoles(Set.of("PASSAGEIRO"));
 				userRepository.save(passageiro);
 
 				System.out.println(">>> 4 Utilizadores criados com sucesso: admin, gestor, condutor, passageiro.");
