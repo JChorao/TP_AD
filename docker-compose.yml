@@ -6,69 +6,106 @@ services:
       MYSQL_ROOT_PASSWORD: root
     ports:
       - "3306:3306"
+    restart: on-failure
     healthcheck:
       test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost"]
-      timeout: 20s
-      retries: 10
+      timeout: 10s
+      retries: 5
+      start_period: 30s
 
   eureka-server:
     build: ./eureka-server
     container_name: eureka-server
     ports:
       - "8761:8761"
+    restart: on-failure
+    environment:
+      - JAVA_TOOL_OPTIONS=-Xmx256m
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O - http://localhost:8761/actuator/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
   api-gateway:
     build: ./api-gateway
     container_name: api-gateway
     ports:
       - "8080:8080"
+    restart: on-failure
+    environment:
+      - JAVA_TOOL_OPTIONS=-Xmx256m
+      # Dá mais tempo (10s) para conectar aos outros serviços
+      - SPRING_CLOUD_GATEWAY_HTTPCLIENT_CONNECT_TIMEOUT=10000
+      # Espera até 30s pela resposta antes de dar erro
+      - SPRING_CLOUD_GATEWAY_HTTPCLIENT_RESPONSE_TIMEOUT=30s
     depends_on:
-      - eureka-server
+      eureka-server:
+        condition: service_healthy
 
   account-service:
     build: ./account-service
+    restart: on-failure
+    environment:
+      - JAVA_TOOL_OPTIONS=-Xmx256m
     depends_on:
       mysql-db:
         condition: service_healthy
       eureka-server:
-        condition: service_started
+        condition: service_healthy
 
   vehicle-service:
     build: ./veiculos
+    restart: on-failure
+    environment:
+      - JAVA_TOOL_OPTIONS=-Xmx256m
     depends_on:
       mysql-db:
         condition: service_healthy
       eureka-server:
-        condition: service_started
+        condition: service_healthy
 
   rental-service:
     build: ./rental-service
+    restart: on-failure
+    environment:
+      - JAVA_TOOL_OPTIONS=-Xmx256m
     depends_on:
       mysql-db:
         condition: service_healthy
       eureka-server:
-        condition: service_started
+        condition: service_healthy
 
-  # ESTES DOIS ESTAVAM EM FALTA:
   payment-service:
     build: ./payment-service
+    restart: on-failure
+    environment:
+      - JAVA_TOOL_OPTIONS=-Xmx256m
     depends_on:
       mysql-db:
         condition: service_healthy
       eureka-server:
-        condition: service_started
+        condition: service_healthy
 
   gps-service:
     build: ./gps-service
+    restart: on-failure
+    environment:
+      - JAVA_TOOL_OPTIONS=-Xmx256m
     depends_on:
       mysql-db:
         condition: service_healthy
       eureka-server:
-        condition: service_started
+        condition: service_healthy
 
   frontend-service:
     build: ./frontend-service
     ports:
       - "8090:8090"
+    restart: on-failure
+    environment:
+      - JAVA_TOOL_OPTIONS=-Xmx256m
     depends_on:
-      - api-gateway
+      api-gateway:
+        condition: service_started
