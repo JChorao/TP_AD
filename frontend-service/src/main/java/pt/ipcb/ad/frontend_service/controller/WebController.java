@@ -74,6 +74,11 @@ public class WebController {
         UserDto user = (UserDto) session.getAttribute("user");
         if (user == null) return "redirect:/login";
 
+        // SEGURANÇA ADICIONAL: Bloquear PASSAGEIRO no servidor
+        if (user.getRoles() != null && user.getRoles().contains("PASSAGEIRO")) {
+            return "redirect:/cars?erro=A sua conta de Passageiro não permite realizar alugueres.";
+        }
+
         try {
             RentalDto rental = new RentalDto();
             rental.setUserId(user.getId());

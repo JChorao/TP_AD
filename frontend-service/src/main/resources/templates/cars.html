@@ -71,6 +71,11 @@
         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     </div>
 
+    <div th:if="${param.erro}" class="alert alert-danger alert-dismissible fade show mb-3">
+        <span th:text="${param.erro}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+
     <div class="row">
         <div class="col-md-9">
             <div class="map-card">
@@ -116,9 +121,8 @@
     var isLoggedIn = [[${isLoggedIn}]];
     var carsList = [[${cars}]];
     var user = [[${user}]]; // Recebe o UserDto da sessão
-    var markers = {}; // Guardar referências dos marcadores
+    var markers = {};
 
-    // Coordenadas iniciais: do utilizador ou Castelo Branco
     var initialLat = (user && user.latitude) ? user.latitude : 39.8230;
     var initialLng = (user && user.longitude) ? user.longitude : -7.4919;
 
@@ -128,7 +132,7 @@
         attribution: '&copy; OpenStreetMap contributors'
     }).addTo(map);
 
-    // --- 2. Marcador do Utilizador (Verde) ---
+    // --- 2. Marcador do Utilizador ---
     var userIcon = L.divIcon({
         className: 'custom-div-icon',
         html: "<div style='background-color:#198754; width: 20px; height: 20px; border-radius: 50%; border: 3px solid white; box-shadow: 0 0 5px rgba(0,0,0,0.5);'></div>",
@@ -188,27 +192,43 @@
             if (car.latitude && car.longitude && car.available) {
                 var marker = L.marker([car.latitude, car.longitude]).addTo(map);
 
-                var formHtml = isLoggedIn ? `
-                    <form action="/rent-car/${car.id}" method="post">
-                        <div class="mb-2">
-                            <label class="form-label small fw-bold">Início</label>
-                            <input type="datetime-local" class="form-control form-control-sm"
-                                   name="startTime" id="start-${car.id}" required
-                                   onchange="updatePrice(${car.id}, ${car.pricePerHour})">
-                        </div>
-                        <div class="mb-2">
-                            <label class="form-label small fw-bold">Fim</label>
-                            <input type="datetime-local" class="form-control form-control-sm"
-                                   name="endTime" id="end-${car.id}" required
-                                   onchange="updatePrice(${car.id}, ${car.pricePerHour})">
-                        </div>
-                        <div class="d-flex justify-content-between align-items-center mb-3 p-2 bg-light rounded border">
-                            <span class="small">Total:</span>
-                            <strong id="total-${car.id}">0.00 €</strong>
-                        </div>
-                        <button type="submit" class="btn btn-primary btn-sm w-100 fw-bold">Alugar</button>
-                    </form>`
-                    : `<a href="/login" class="btn btn-outline-primary btn-sm w-100">Login para Reservar</a>`;
+                var formHtml = '';
+
+                if (isLoggedIn) {
+                    // VERIFICAÇÃO DE ROLE PASSAGEIRO
+                    var isPassageiro = user.roles && user.roles.includes('PASSAGEIRO');
+
+                    if (isPassageiro) {
+                        formHtml = `
+                            <div class="alert alert-warning p-2 small mb-0 text-center">
+                                <i class="fa-solid fa-ban me-1"></i>
+                                Contas de <b>Passageiro</b> não podem realizar alugueres.
+                            </div>`;
+                    } else {
+                        formHtml = `
+                            <form action="/rent-car/${car.id}" method="post">
+                                <div class="mb-2">
+                                    <label class="form-label small fw-bold">Início</label>
+                                    <input type="datetime-local" class="form-control form-control-sm"
+                                           name="startTime" id="start-${car.id}" required
+                                           onchange="updatePrice(${car.id}, ${car.pricePerHour})">
+                                </div>
+                                <div class="mb-2">
+                                    <label class="form-label small fw-bold">Fim</label>
+                                    <input type="datetime-local" class="form-control form-control-sm"
+                                           name="endTime" id="end-${car.id}" required
+                                           onchange="updatePrice(${car.id}, ${car.pricePerHour})">
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center mb-3 p-2 bg-light rounded border">
+                                    <span class="small">Total:</span>
+                                    <strong id="total-${car.id}">0.00 €</strong>
+                                </div>
+                                <button type="submit" class="btn btn-primary btn-sm w-100 fw-bold">Alugar</button>
+                            </form>`;
+                    }
+                } else {
+                    formHtml = `<a href="/login" class="btn btn-outline-primary btn-sm w-100">Login para Reservar</a>`;
+                }
 
                 var popupContent = `
                     <div class="popup-header"><h6>${car.brand} ${car.model}</h6></div>
