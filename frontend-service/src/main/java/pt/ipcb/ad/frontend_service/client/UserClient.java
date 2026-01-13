@@ -12,24 +12,21 @@ public interface UserClient {
     @PostMapping("/accounts/login")
     UserDto login(@RequestBody LoginRequest loginRequest);
 
+    @PostMapping("/accounts/register")
+    UserDto register(@RequestBody UserDto user);
+
     @GetMapping("/accounts/users")
     List<UserDto> getAllUsers();
 
-    @GetMapping("/accounts/users/username/{username}")
+    @GetMapping("/accounts/users/{username}")
     UserDto getUserByUsername(@PathVariable("username") String username);
 
-    @GetMapping("/accounts/users/{id}")
+    @GetMapping("/accounts/users/id/{id}") // Confirma se no Controller tens este endpoint específico
     UserDto getUserById(@PathVariable("id") Long id);
-
-    @PostMapping("/accounts/users")
-    UserDto createUser(@RequestBody UserDto user);
 
     @PutMapping("/accounts/users/{id}")
     UserDto updateUser(@PathVariable("id") Long id, @RequestBody UserDto user);
 
-    @PostMapping("/accounts/register")
-    UserDto register(@RequestBody UserDto user);
-
-    @PutMapping("/users/{id}/block")
-    UserDto toggleBlock(@PathVariable("id") Long id);
+    @PutMapping("/accounts/users/{id}/block")
+    void blockUser(@PathVariable("id") Long id, @RequestParam("block") boolean block);
 }

@@ -1,23 +1,16 @@
-package pt.ipcb.ad.frontend_service.dto;
+package pt.ipcb.ad.account_service.dto;
 
 import lombok.Data;
 
 import java.time.LocalDate;
-import java.util.Set;
 
 @Data
-public class UserDto {
-    private Long id;
-    private String username;
+public class UserUpdateDto {
     private String email;
     private String phoneNumber;
     private String address;
-    private Set<String> roles;
-    private boolean blocked;
-
-    private String newPassword;
     private String oldPassword;
-
+    private String newPassword;
     private String licenseNumber;
     private LocalDate licenseIssueDate;
     private LocalDate licenseExpiryDate;

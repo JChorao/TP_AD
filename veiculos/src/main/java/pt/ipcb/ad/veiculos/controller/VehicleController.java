@@ -27,10 +27,12 @@ public class VehicleController {
     }
 
     @PostMapping
-    public Vehicle addVehicle(@RequestBody Vehicle vehicle) {
+    public ResponseEntity<Vehicle> createVehicle(@RequestBody Vehicle vehicle) {
         // Garante que default é true se não vier preenchido
         if (!vehicle.isAvailable()) vehicle.setAvailable(true);
-        return repository.save(vehicle);
+
+        Vehicle savedVehicle = repository.save(vehicle);
+        return ResponseEntity.ok(savedVehicle);
     }
 
     // --- NOVO: ATUALIZAR VEÍCULO ---
@@ -62,10 +64,4 @@ public class VehicleController {
         return repository.save(vehicle);
     }
 
-    @PostMapping
-    public ResponseEntity<Vehicle> createVehicle(@RequestBody Vehicle vehicle) {
-        // Garante que o ID é nulo para criar um novo e não atualizar
-        Vehicle savedVehicle = repository.save(vehicle);
-        return ResponseEntity.ok(savedVehicle);
-    }
 }

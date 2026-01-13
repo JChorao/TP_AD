@@ -78,7 +78,7 @@
                             </a>
 
                             <a th:if="${!u.blocked}"
-                               th:href="@{/users/block/{id}(id=${u.id})}"
+                               th:href="@{/users/block/{id}(id=${u.id}, block=true)}"
                                class="btn btn-sm btn-outline-danger"
                                title="Bloquear Utilizador"
                                onclick="return confirm('Tem a certeza que deseja BLOQUEAR este utilizador?');">
@@ -86,11 +86,12 @@
                             </a>
 
                             <a th:if="${u.blocked}"
-                               th:href="@{/users/block/{id}(id=${u.id})}"
+                               th:href="@{/users/block/{id}(id=${u.id}, block=false)}"
                                class="btn btn-sm btn-outline-success"
                                title="Desbloquear Utilizador">
                                 <i class="fa-solid fa-lock-open"></i>
                             </a>
+
                         </div>
                     </td>
                 </tr>

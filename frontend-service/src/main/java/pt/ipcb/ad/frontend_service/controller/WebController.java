@@ -163,6 +163,28 @@ public class WebController {
         return "my-rentals";
     }
 
+
+    @GetMapping("/users/block/{id}")
+    public String blockUserProcess(@PathVariable Long id,
+                                   @RequestParam("block") boolean block, // <--- Adicionado parâmetro
+                                   HttpSession session) {
+        UserDto currentUser = (UserDto) session.getAttribute("user");
+
+        if (currentUser == null || !currentUser.getRoles().contains("ADMIN")) {
+            return "redirect:/users?error=Permissao Negada";
+        }
+
+        try {
+            // Chama o método correto do UserClient (blockUser em vez de toggleBlock)
+            userClient.blockUser(id, block);
+
+            String msg = block ? "Utilizador bloqueado com sucesso" : "Utilizador desbloqueado";
+            return "redirect:/users?success=" + msg;
+        } catch (Exception e) {
+            return "redirect:/users?error=Erro ao alterar estado";
+        }
+    }
+
     @GetMapping("/profile")
     public String profile(HttpSession session, Model model) {
         UserDto user = (UserDto) session.getAttribute("user");
@@ -276,6 +298,7 @@ public class WebController {
         model.addAttribute("currentURI", "/statistics");
         return "statistics";
     }
+
     @GetMapping("/manage-vehicles")
     public String manageVehicles(HttpSession session, Model model) {
         UserDto user = (UserDto) session.getAttribute("user");
@@ -335,6 +358,17 @@ public class WebController {
             return "redirect:/manage-vehicles?success=Veículo removido";
         } catch (Exception e) {
             return "redirect:/manage-vehicles?error=Erro ao remover veículo";
+        }
+    }
+
+    @PostMapping("/vehicles/update")
+    public String updateVehicle(@ModelAttribute VehicleDto vehicleDto) {
+        try {
+            // O ID vem escondido no formulário (hidden input)
+            vehicleClient.updateVehicle(vehicleDto.getId(), vehicleDto);
+            return "redirect:/vehicles/manage?success=Veículo atualizado com sucesso";
+        } catch (Exception e) {
+            return "redirect:/vehicles/manage?error=Erro ao atualizar veículo";
         }
     }
 
