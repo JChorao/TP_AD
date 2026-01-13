@@ -245,13 +245,16 @@ public class WebController {
     @GetMapping("/statistics")
     public String statistics(HttpSession session, Model model) {
         UserDto user = (UserDto) session.getAttribute("user");
+
+        // 1. Verificar se está logado
         if (user == null) return "redirect:/login";
 
-        boolean isAdmin = user.getRoles() != null && user.getRoles().contains("ADMIN");
+        // 2. Verificar se é GESTOR_FROTA (Apenas ele pode entrar, Admin NÃO)
         boolean isManager = user.getRoles() != null && user.getRoles().contains("GESTOR_FROTA");
 
-        if (!isAdmin && !isManager) {
-            return "redirect:/cars?erro=Acesso negado.";
+        if (!isManager) {
+            // Se não for gestor (mesmo que seja Admin), redireciona com erro
+            return "redirect:/cars?erro=Acesso negado. Apenas o Gestor de Frota pode ver estatísticas.";
         }
 
         try {

@@ -30,7 +30,7 @@
                     </a>
                 </li>
 
-                <li class="nav-item" th:if="${user != null and (user.roles.contains('ADMIN') or user.roles.contains('GESTOR'))}">
+                <li class="nav-item" th:if="${user != null and (user.roles.contains('ADMIN') or user.roles.contains('GESTOR_FROTA'))}">
                     <a class="nav-link" th:href="@{/statistics}"
                        th:classappend="${currentURI == '/statistics' ? 'active' : ''}">
                         <i class="fa-solid fa-money-bill-wave me-1"></i> Pagamentos
