@@ -29,4 +29,7 @@ public interface UserClient {
 
     @PostMapping("/accounts/register")
     UserDto register(@RequestBody UserDto user);
+
+    @PutMapping("/users/{id}/block")
+    UserDto toggleBlock(@PathVariable("id") Long id);
 }

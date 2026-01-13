@@ -207,6 +207,23 @@ public class WebController {
         return "my-rentals";
     }
 
+    @GetMapping("/users/block/{id}")
+    public String blockUserProcess(@PathVariable Long id, HttpSession session) {
+        UserDto currentUser = (UserDto) session.getAttribute("user");
+
+        // Segurança: Só ADMIN pode bloquear
+        if (currentUser == null || !currentUser.getRoles().contains("ADMIN")) {
+            return "redirect:/users?error=Permissao Negada";
+        }
+
+        try {
+            userClient.toggleBlock(id);
+            return "redirect:/users?success=Estado do utilizador alterado";
+        } catch (Exception e) {
+            return "redirect:/users?error=Erro ao alterar estado";
+        }
+    }
+
 
     // --- PERFIL E UPGRADE DE CONTA ---
     @GetMapping("/profile")
