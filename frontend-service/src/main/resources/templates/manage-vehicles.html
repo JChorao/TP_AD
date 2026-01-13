@@ -4,7 +4,20 @@
   <meta charset="UTF-8">
   <title>Gestão de Frota</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+
+  <style>
+    /* Define a altura do mapa dentro do modal */
+    #mapPicker {
+      height: 300px;
+      width: 100%;
+      border-radius: 5px;
+      border: 1px solid #ced4da;
+      margin-bottom: 15px;
+      cursor: crosshair; /* Cursor em cruz para indicar seleção */
+    }
+  </style>
 </head>
 <body>
 <div th:replace="~{fragments/navbar :: navbar}"></div>
@@ -81,52 +94,114 @@
 </div>
 
 <div class="modal fade" id="addVehicleModal" tabindex="-1">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <form th:action="@{/manage-vehicles/create}" th:object="${newVehicle}" method="post">
-        <div class="modal-header bg-primary text-white">
-          <h5 class="modal-title"><i class="fa-solid fa-car-side me-2"></i>Novo Veículo</h5>
-          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-        </div>
-        <div class="modal-body">
-          <div class="row mb-3">
-            <div class="col-6">
-              <label class="form-label">Marca</label>
-              <input type="text" class="form-control" name="brand" required placeholder="Ex: Tesla">
-            </div>
-            <div class="col-6">
-              <label class="form-label">Modelo</label>
-              <input type="text" class="form-control" name="model" required placeholder="Ex: Model 3">
-            </div>
+  <div class="modal-dialog modal-lg"> <div class="modal-content">
+    <form th:action="@{/manage-vehicles/create}" th:object="${newVehicle}" method="post">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title"><i class="fa-solid fa-map-pin me-2"></i>Novo Veículo</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+
+        <div class="row mb-3">
+          <div class="col-md-6">
+            <label class="form-label fw-bold">Marca</label>
+            <input type="text" class="form-control" name="brand" required placeholder="Ex: Tesla">
           </div>
-          <div class="mb-3">
-            <label class="form-label">Matrícula</label>
+          <div class="col-md-6">
+            <label class="form-label fw-bold">Modelo</label>
+            <input type="text" class="form-control" name="model" required placeholder="Ex: Model 3">
+          </div>
+        </div>
+
+        <div class="row mb-3">
+          <div class="col-md-6">
+            <label class="form-label fw-bold">Matrícula</label>
             <input type="text" class="form-control" name="licensePlate" required placeholder="AA-00-AA">
           </div>
-          <div class="mb-3">
-            <label class="form-label">Preço por Hora (€)</label>
+          <div class="col-md-6">
+            <label class="form-label fw-bold">Preço/Hora (€)</label>
             <input type="number" step="0.01" class="form-control" name="pricePerHour" required value="10.0">
           </div>
-          <div class="row mb-3">
-            <div class="col-6">
-              <label class="form-label">Latitude</label>
-              <input type="number" step="any" class="form-control" name="latitude" required value="39.82">
-            </div>
-            <div class="col-6">
-              <label class="form-label">Longitude</label>
-              <input type="number" step="any" class="form-control" name="longitude" required value="-7.49">
-            </div>
+        </div>
+
+        <hr>
+
+        <div class="mb-2">
+          <label class="form-label fw-bold text-primary">
+            <i class="fa-solid fa-location-dot me-1"></i>Clique no mapa para definir a localização:
+          </label>
+          <div id="mapPicker"></div>
+        </div>
+
+        <div class="row mb-3 bg-light p-2 rounded mx-0 border">
+          <div class="col-6">
+            <label class="form-label small text-muted">Latitude</label>
+            <input type="number" step="any" class="form-control form-control-sm bg-white"
+                   id="inputLat" name="latitude" required readonly>
+          </div>
+          <div class="col-6">
+            <label class="form-label small text-muted">Longitude</label>
+            <input type="number" step="any" class="form-control form-control-sm bg-white"
+                   id="inputLng" name="longitude" required readonly>
           </div>
         </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-          <button type="submit" class="btn btn-primary">Guardar Veículo</button>
-        </div>
-      </form>
-    </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button type="submit" class="btn btn-primary">Guardar Veículo</button>
+      </div>
+    </form>
+  </div>
   </div>
 </div>
 
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+  // Variáveis Globais para o Mapa
+  var pickerMap = null;
+  var pickerMarker = null;
+
+  // Quando o Modal é aberto (Bootstrap event)
+  var myModal = document.getElementById('addVehicleModal');
+  myModal.addEventListener('shown.bs.modal', function () {
+
+    // Se o mapa ainda não foi inicializado
+    if (pickerMap === null) {
+      // Inicializa centrado em Castelo Branco
+      pickerMap = L.map('mapPicker').setView([39.8222, -7.4906], 13);
+
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors'
+      }).addTo(pickerMap);
+
+      // Adicionar evento de clique no mapa
+      pickerMap.on('click', function(e) {
+        var lat = e.latlng.lat.toFixed(6);
+        var lng = e.latlng.lng.toFixed(6);
+
+        // Atualizar Inputs
+        document.getElementById('inputLat').value = lat;
+        document.getElementById('inputLng').value = lng;
+
+        // Mover ou criar marcador
+        if (pickerMarker) {
+          pickerMarker.setLatLng(e.latlng);
+        } else {
+          pickerMarker = L.marker(e.latlng).addTo(pickerMap);
+        }
+      });
+    }
+
+    // TRUQUE IMPORTANTE:
+    // O Leaflet precisa disto para recalcular o tamanho correto dentro do modal
+    setTimeout(function() {
+      pickerMap.invalidateSize();
+    }, 10);
+  });
+</script>
+
 </body>
 </html>

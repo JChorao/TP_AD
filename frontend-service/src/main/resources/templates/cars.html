@@ -70,12 +70,7 @@
 <div class="main-wrapper">
     <div class="map-card">
         <div class="map-header d-flex align-items-center"> <h4 class="m-0"><i class="fa-solid fa-map-location-dot me-2 text-primary"></i>Veículos Disponíveis</h4>
-
-            <a th:if="${session.user != null and session.user.roles.contains('GESTOR_FROTA')}"
-               href="/cars/add"
-               class="btn btn-sm btn-outline-primary ms-auto me-2">
-                <i class="fa-solid fa-plus"></i> Novo Veículo
-            </a>
+            
             <span class="badge bg-success" th:classappend="${session.user == null or (!session.user.roles.contains('ADMIN') and !session.user.roles.contains('GESTOR_FROTA')) ? 'ms-auto' : ''}"
                   th:text="${cars != null ? cars.size() + ' Carros' : '0 Carros'}">
             </span>
