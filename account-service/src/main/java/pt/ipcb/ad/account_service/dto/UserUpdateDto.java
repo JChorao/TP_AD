@@ -6,6 +6,7 @@ import java.time.LocalDate;
 
 @Data
 public class UserUpdateDto {
+    private String username;
     private String email;
     private String phoneNumber;
     private String address;

@@ -28,7 +28,6 @@
                 </div>
                 <div class="card-body">
                     <form th:action="@{/profile/update}" method="post">
-
                         <div class="row mb-3">
                             <div class="col-md-6">
                                 <label class="form-label fw-bold">Username</label>
@@ -43,6 +42,11 @@
                         <div class="mb-3">
                             <label class="form-label fw-bold">Morada</label>
                             <input type="text" name="address" class="form-control" th:value="${user.address}">
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Telemóvel</label>
+                            <input type="text" name="phoneNumber" class="form-control" th:value="${user.phoneNumber}">
                         </div>
 
                         <hr class="my-4">
@@ -75,7 +79,7 @@
                                 Nº Carta: <span th:text="${user.licenseNumber}"></span> | Validade: <span th:text="${user.licenseExpiryDate}"></span>
                             </small>
                             <small class="text-muted" th:unless="${user.licenseNumber}">
-                                Nenhuma carta associada.
+                                Nenhuma carta associada (Necessária para alugar).
                             </small>
                         </div>
                         <button class="btn btn-outline-dark" type="button" data-bs-toggle="collapse" data-bs-target="#collapseLicense">

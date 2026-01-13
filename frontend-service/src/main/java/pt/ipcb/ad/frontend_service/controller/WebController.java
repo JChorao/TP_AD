@@ -74,9 +74,9 @@ public class WebController {
         UserDto user = (UserDto) session.getAttribute("user");
         if (user == null) return "redirect:/login";
 
-        // SEGURANÇA ADICIONAL: Bloquear PASSAGEIRO no servidor
-        if (user.getRoles() != null && user.getRoles().contains("PASSAGEIRO")) {
-            return "redirect:/cars?erro=A sua conta de Passageiro não permite realizar alugueres.";
+        // Verifica se o utilizador TEM a permissão de CONDUTOR (mais seguro que verificar se é passageiro)
+        if (user.getRoles() == null || !user.getRoles().contains("CONDUTOR")) {
+            return "redirect:/cars?erro=Apenas utilizadores com Carta de Condução podem alugar!";
         }
 
         try {
@@ -200,8 +200,12 @@ public class WebController {
         if (sessionUser == null) return "redirect:/login";
 
         try {
+            // Ao atualizar o perfil, recebemos o UserDto atualizado (com a nova Role, se aplicável)
             UserDto updated = userClient.updateUser(sessionUser.getId(), userDto);
+
+            // ATUALIZAÇÃO DA SESSÃO: Fundamental para a mudança de role ser imediata
             session.setAttribute("user", updated);
+
             return "redirect:/profile?success=true";
         } catch (Exception e) {
             return "redirect:/profile?error=Erro ao atualizar";
@@ -210,7 +214,7 @@ public class WebController {
 
     @GetMapping("/register")
     public String registerPage(Model model) {
-        model.addAttribute("user", new UserDto()); // Binds UserDto to the form
+        model.addAttribute("user", new UserDto());
         return "register";
     }
 
@@ -231,7 +235,6 @@ public class WebController {
         UserDto user = (UserDto) session.getAttribute("user");
         if (user == null) return "redirect:/login";
 
-        // LÓGICA CORRIGIDA: Se NÃO for Gestor E NÃO for Admin, então expulsa
         if (!user.getRoles().contains("GESTOR_FROTA") && !user.getRoles().contains("ADMIN")) {
             return "redirect:/cars?erro=Acesso negado. Apenas Gestores ou Administradores podem ver estatísticas.";
         }
