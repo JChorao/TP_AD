@@ -36,23 +36,22 @@ public class WebController {
 
     @GetMapping("/cars")
     public String carsPage(Model model, HttpSession session) {
-        // 1. Tenta obter o utilizador da sessão
         UserDto user = (UserDto) session.getAttribute("user");
-
-        // 2. Se não houver user, redireciona para o login
         if (user == null) {
             return "redirect:/login";
         }
 
-        // 3. Adiciona as variáveis que o navbar.html EXIGE
         model.addAttribute("user", user);
-        model.addAttribute("isLoggedIn", true); // <--- ESTA LINHA RESOLVE O ERRO 500
+        model.addAttribute("isLoggedIn", true);
 
         try {
             List<VehicleDto> cars = vehicleClient.getAllVehicles();
-            model.addAttribute("cars", cars);
+            // Filtrar apenas carros disponíveis no frontend para segurança visual
+            List<VehicleDto> availableCars = cars.stream()
+                    .filter(VehicleDto::isAvailable)
+                    .collect(Collectors.toList());
+            model.addAttribute("cars", availableCars);
         } catch (Exception e) {
-            System.err.println("Erro ao listar carros: " + e.getMessage());
             model.addAttribute("cars", List.of());
             model.addAttribute("error", "Serviço de veículos indisponível.");
         }
@@ -70,12 +69,9 @@ public class WebController {
         UserDto user = (UserDto) session.getAttribute("user");
         if (user == null) return "redirect:/login";
 
-        if (!user.getRoles().contains("CONDUTOR")) {
+        // Verificação de Roles conforme o enunciado [cite: 280, 322]
+        if (user.getRoles() == null || !user.getRoles().contains("CONDUTOR")) {
             return "redirect:/cars?erro=Apenas condutores podem alugar!";
-        }
-
-        if (endTime.isBefore(startTime)) {
-            return "redirect:/cars?erro=A data de fim deve ser posterior à data de início.";
         }
 
         try {
@@ -86,12 +82,15 @@ public class WebController {
             rental.setEndTime(endTime);
             rental.setActive(true);
 
+            // 1. Regista o aluguer no Rental-Service
             rentalClient.startRental(rental);
+            // 2. Bloqueia o veículo no Vehicle-Service para que ninguém mais o veja no mapa
+            // Com a interface VehicleClient corrigida acima, esta linha deixará de dar erro.
+            vehicleClient.updateAvailability(vehicleId, false);
 
             return "redirect:/my-rentals";
         } catch (Exception e) {
-            e.printStackTrace();
-            return "redirect:/cars?erro=Falha ao iniciar aluguer: " + e.getMessage();
+            return "redirect:/cars?erro=Falha: " + e.getMessage();
         }
     }
 
@@ -101,7 +100,13 @@ public class WebController {
         if (user == null) return "redirect:/login";
 
         try {
-            rentalClient.stopRental(id);
+            // 1. Parar o aluguer (calcula preço e distância)
+            RentalDto finishedRental = rentalClient.stopRental(id);
+
+            // 2. Libertar o veículo novamente
+            if (finishedRental != null && finishedRental.getVehicleId() != null) {
+                vehicleClient.updateAvailability(finishedRental.getVehicleId(), true);
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -143,10 +148,9 @@ public class WebController {
         UserDto sessionUser = (UserDto) session.getAttribute("user");
         if (sessionUser == null) return "redirect:/login";
 
-        boolean isAdmin = sessionUser.getRoles().contains("ADMIN");
-        boolean isOwner = sessionUser.getId().equals(id);
-
-        if (!isOwner && !isAdmin) return "redirect:/cars";
+        if (!sessionUser.getId().equals(id) && !sessionUser.getRoles().contains("ADMIN")) {
+            return "redirect:/cars";
+        }
 
         try {
             List<RentalDto> allRentals = rentalClient.getAllRentals();
@@ -155,17 +159,14 @@ public class WebController {
                     .collect(Collectors.toList());
             model.addAttribute("viagens", userRentals);
         } catch (Exception e) {
-            e.printStackTrace();
-            model.addAttribute("error", "Erro ao carregar viagens: " + e.getMessage());
+            model.addAttribute("error", "Erro ao carregar viagens.");
         }
 
         model.addAttribute("user", sessionUser);
         model.addAttribute("isLoggedIn", true);
-        model.addAttribute("currentURI", "/my-rentals");
-
         return "my-rentals";
     }
-    
+
 
     // --- PERFIL E UPGRADE DE CONTA ---
     @GetMapping("/profile")

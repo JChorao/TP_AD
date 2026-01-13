@@ -43,8 +43,7 @@ public class VehicleController {
         Vehicle vehicle = repository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Veículo não encontrado"));
 
-        vehicle.setAvailable(available); // Define true ou false
-
+        vehicle.setAvailable(available);
         return repository.save(vehicle);
     }
 }
