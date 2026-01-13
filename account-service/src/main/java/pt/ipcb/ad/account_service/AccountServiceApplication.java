@@ -64,6 +64,7 @@ public class AccountServiceApplication {
 				condutor.setEmail("joao.condutor@email.com");
 				condutor.setAddress("Av. do Empresário, Castelo Branco");
 				condutor.setPhoneNumber("930000000");
+				condutor.setRoles(Set.of("CONDUTOR"));
 
 				// Dados específicos de condutor
 				condutor.setLicenseNumber("P-12345678");

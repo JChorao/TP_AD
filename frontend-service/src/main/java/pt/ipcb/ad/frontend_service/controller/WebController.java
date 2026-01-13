@@ -202,4 +202,24 @@ public class WebController {
             return "redirect:/profile?error=" + e.getMessage();
         }
     }
+
+    @GetMapping("/register")
+    public String registerPage(Model model) {
+        model.addAttribute("user", new UserDto());
+        return "register";
+    }
+
+    @PostMapping("/register")
+    public String registerProcess(@ModelAttribute UserDto userDto, Model model) {
+        try {
+            // Tenta registar via UserClient
+            userClient.register(userDto);
+            return "redirect:/login?registered=true"; // Sucesso, vai para login
+        } catch (Exception e) {
+            // Erro (ex: username duplicado), volta para o formulário
+            model.addAttribute("error", "Erro ao registar: Verifique se os dados são únicos.");
+            model.addAttribute("user", userDto); // Mantém os dados preenchidos
+            return "register";
+        }
+    }
 }
