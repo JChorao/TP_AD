@@ -6,9 +6,9 @@ import java.util.Optional;
 
 public interface UserRepository extends JpaRepository<User, Long> {
 
-    // O JpaRepository já te dá o findAll(), save(), findById(), etc.
+    // Método necessário para o Login/Controller funcionar
+    Optional<User> findByUsername(String username);
 
-    // Sugestão (vai ser útil para o Login depois):
-    // Permite encontrar um utilizador pelo email
+    // Pode manter este se quiser usar email no futuro, mas o username é o principal agora
     Optional<User> findByEmail(String email);
 }
